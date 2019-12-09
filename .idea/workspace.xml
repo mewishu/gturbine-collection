@@ -2,85 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="c042910e-8994-4008-9485-ec9a99cadb9f" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/Formatter.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/HEADER" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-bootstrap/pom.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-bootstrap/src/main/java/org/excellentcoder/gturbine/bootstrap/GTurbineBootstrap.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-common/pom.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-container/pom.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-container/src/main/java/org/excellentcoder/gturbine/container/GTurbineContainer.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader-tools/pom.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader-tools/src/main/java/org/excellentcoder/gturbine/loader/tools/BuildPropertiesWriter.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader-tools/src/main/java/org/excellentcoder/gturbine/loader/tools/CustomLoaderLayout.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader-tools/src/main/java/org/excellentcoder/gturbine/loader/tools/DefaultLaunchScript.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader-tools/src/main/java/org/excellentcoder/gturbine/loader/tools/DefaultLayoutFactory.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader-tools/src/main/java/org/excellentcoder/gturbine/loader/tools/FileUtils.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader-tools/src/main/java/org/excellentcoder/gturbine/loader/tools/JarWriter.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader-tools/src/main/java/org/excellentcoder/gturbine/loader/tools/JavaExecutable.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader-tools/src/main/java/org/excellentcoder/gturbine/loader/tools/LaunchScript.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader-tools/src/main/java/org/excellentcoder/gturbine/loader/tools/Layout.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader-tools/src/main/java/org/excellentcoder/gturbine/loader/tools/LayoutFactory.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader-tools/src/main/java/org/excellentcoder/gturbine/loader/tools/Layouts.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader-tools/src/main/java/org/excellentcoder/gturbine/loader/tools/Libraries.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader-tools/src/main/java/org/excellentcoder/gturbine/loader/tools/Library.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader-tools/src/main/java/org/excellentcoder/gturbine/loader/tools/LibraryCallback.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader-tools/src/main/java/org/excellentcoder/gturbine/loader/tools/LibraryScope.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader-tools/src/main/java/org/excellentcoder/gturbine/loader/tools/LoaderClassesWriter.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader-tools/src/main/java/org/excellentcoder/gturbine/loader/tools/MainClassFinder.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader-tools/src/main/java/org/excellentcoder/gturbine/loader/tools/Repackager.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader-tools/src/main/java/org/excellentcoder/gturbine/loader/tools/RepackagingLayout.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader-tools/src/main/java/org/excellentcoder/gturbine/loader/tools/RunProcess.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader-tools/src/main/java/org/excellentcoder/gturbine/loader/tools/SignalUtils.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader-tools/src/main/java/org/excellentcoder/gturbine/loader/tools/package-info.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader/pom.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader/src/main/java/org/excellentcoder/gturbine/loader/ContainerLauncher.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader/src/main/java/org/excellentcoder/gturbine/loader/ContainerURLClassLoader.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader/src/main/java/org/excellentcoder/gturbine/loader/ExecutableArchiveLauncher.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader/src/main/java/org/excellentcoder/gturbine/loader/JarLauncher.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader/src/main/java/org/excellentcoder/gturbine/loader/LaunchedURLClassLoader.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader/src/main/java/org/excellentcoder/gturbine/loader/Launcher.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader/src/main/java/org/excellentcoder/gturbine/loader/MainMethodRunner.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader/src/main/java/org/excellentcoder/gturbine/loader/WarLauncher.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader/src/main/java/org/excellentcoder/gturbine/loader/archive/Archive.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader/src/main/java/org/excellentcoder/gturbine/loader/archive/ExplodedArchive.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader/src/main/java/org/excellentcoder/gturbine/loader/archive/JarFileArchive.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader/src/main/java/org/excellentcoder/gturbine/loader/data/RandomAccessData.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader/src/main/java/org/excellentcoder/gturbine/loader/data/RandomAccessDataFile.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader/src/main/java/org/excellentcoder/gturbine/loader/jar/AsciiBytes.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader/src/main/java/org/excellentcoder/gturbine/loader/jar/Bytes.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader/src/main/java/org/excellentcoder/gturbine/loader/jar/CentralDirectoryEndRecord.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader/src/main/java/org/excellentcoder/gturbine/loader/jar/CentralDirectoryFileHeader.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader/src/main/java/org/excellentcoder/gturbine/loader/jar/CentralDirectoryParser.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader/src/main/java/org/excellentcoder/gturbine/loader/jar/CentralDirectoryVisitor.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader/src/main/java/org/excellentcoder/gturbine/loader/jar/FileHeader.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader/src/main/java/org/excellentcoder/gturbine/loader/jar/Handler.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader/src/main/java/org/excellentcoder/gturbine/loader/jar/JarEntry.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader/src/main/java/org/excellentcoder/gturbine/loader/jar/JarEntryFilter.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader/src/main/java/org/excellentcoder/gturbine/loader/jar/JarFile.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader/src/main/java/org/excellentcoder/gturbine/loader/jar/JarFileEntries.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader/src/main/java/org/excellentcoder/gturbine/loader/jar/JarURLConnection.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader/src/main/java/org/excellentcoder/gturbine/loader/jar/StringSequence.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader/src/main/java/org/excellentcoder/gturbine/loader/jar/ZipInflaterInputStream.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader/src/main/java/org/excellentcoder/gturbine/loader/jar/package-info.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader/src/main/java/org/excellentcoder/gturbine/loader/util/ClassUtils.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader/src/main/java/org/excellentcoder/gturbine/loader/util/ResourceUtils.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-maven-plugin/pom.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-maven-plugin/src/main/java/org/excellentcoder/gturbine/maven/AbstractDependencyFilterMojo.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-maven-plugin/src/main/java/org/excellentcoder/gturbine/maven/ArtifactsLibraries.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-maven-plugin/src/main/java/org/excellentcoder/gturbine/maven/DependencyFilter.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-maven-plugin/src/main/java/org/excellentcoder/gturbine/maven/Exclude.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-maven-plugin/src/main/java/org/excellentcoder/gturbine/maven/ExcludeFilter.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-maven-plugin/src/main/java/org/excellentcoder/gturbine/maven/FilterableDependency.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-maven-plugin/src/main/java/org/excellentcoder/gturbine/maven/Include.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-maven-plugin/src/main/java/org/excellentcoder/gturbine/maven/IncludeFilter.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-maven-plugin/src/main/java/org/excellentcoder/gturbine/maven/MatchingGroupIdFilter.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-maven-plugin/src/main/java/org/excellentcoder/gturbine/maven/RepackageMojo.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-maven-plugin/src/main/java/org/excellentcoder/gturbine/maven/package-info.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-plugin-maven-plugin/pom.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gturbine-project/gturbine-tools/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gturbine-bom/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/gturbine-bom/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gturbine-project/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/gturbine-project/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/gturbine-project/gturbine-container/target/" />
     <ignored path="$PROJECT_DIR$/target/" />
@@ -135,23 +57,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="RepackageMojo.java" pinned="false" current-in-tab="false">
+      <file leaf-file-name="RepackageMojo.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-maven-plugin/src/main/java/org/excellentcoder/gturbine/maven/RepackageMojo.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="598">
-              <caret line="72" column="20" lean-forward="true" selection-start-line="72" selection-start-column="20" selection-end-line="72" selection-end-column="20" />
-              <folding>
-                <element signature="imports" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="GTurbineContainer.java" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/gturbine-project/gturbine-container/src/main/java/org/excellentcoder/gturbine/container/GTurbineContainer.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="624">
-              <caret line="54" column="1" lean-forward="true" selection-start-line="54" selection-start-column="1" selection-end-line="54" selection-end-column="1" />
+            <state relative-caret-position="668">
+              <caret line="96" column="7" lean-forward="true" selection-start-line="96" selection-start-column="7" selection-end-line="96" selection-end-column="7" />
               <folding>
                 <element signature="imports" expanded="true" />
               </folding>
@@ -752,12 +662,12 @@
       <option name="presentableId" value="Default" />
       <updated>1575511633919</updated>
       <workItem from="1575511637904" duration="39461000" />
-      <workItem from="1575618165415" duration="30518000" />
+      <workItem from="1575618165415" duration="31427000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="69979000" />
+    <option name="totallyTimeSpent" value="70888000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="1440" y="-1020" width="1080" height="1920" extended-state="0" />
@@ -1260,16 +1170,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-maven-plugin/src/main/java/org/excellentcoder/gturbine/maven/RepackageMojo.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="598">
-          <caret line="72" column="20" lean-forward="true" selection-start-line="72" selection-start-column="20" selection-end-line="72" selection-end-column="20" />
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-loader/src/main/java/org/excellentcoder/gturbine/loader/data/RandomAccessDataFile.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="752">
@@ -1281,6 +1181,16 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="624">
           <caret line="54" column="1" lean-forward="true" selection-start-line="54" selection-start-column="1" selection-end-line="54" selection-end-column="1" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/gturbine-project/gturbine-tools/gturbine-maven-plugin/src/main/java/org/excellentcoder/gturbine/maven/RepackageMojo.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="668">
+          <caret line="96" column="7" lean-forward="true" selection-start-line="96" selection-start-column="7" selection-end-line="96" selection-end-column="7" />
           <folding>
             <element signature="imports" expanded="true" />
           </folding>

@@ -27,9 +27,10 @@ import org.excellentcoder.gturbine.loader.Launcher;
 /**
  * An archive that can be launched by the {@link Launcher}.
  *
- * ��ΪArchive? 1). �鵵�ļ� 2). ͨ��Ϊtar/zip�ȸ�ʽѹ���� 3). jarΪzip��ʽ�鵵�ļ�
+ * archive是归档的意思，springboot打出来的jar包就是一个archive。
+ * 一个archive可以是一个jar（JarFileArchive），也可以是一个文件目录（ExplodedArchive）。
+ * 这些都可以理解为Springboot抽象出来的统一访问资源的层。
  *
- * SpringBoot������Archive�ĸ��һ��Archive������jar��JarFileArchive����������һ���ļ�Ŀ¼��ExplodedArchive�������Գ���Ϊͳһ������Դ���߼��㡣
  *
  * @author Phillip Webb
  * @since 1.0.0

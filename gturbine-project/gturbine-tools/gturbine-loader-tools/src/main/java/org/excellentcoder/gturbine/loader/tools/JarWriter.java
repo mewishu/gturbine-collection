@@ -58,7 +58,7 @@ public class JarWriter implements LoaderClassesWriter, AutoCloseable {
 
     private static final UnpackHandler   NEVER_UNPACK      = new NeverUnpackHandler();
 
-    private static final String          NESTED_LOADER_JAR = "META-INF/loader/spring-boot-loader.jar";
+    private static final String          NESTED_LOADER_JAR = "META-INF/loader/gturbine-loader.jar";
 
     private static final int             BUFFER_SIZE       = 32 * 1024;
 

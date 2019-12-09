@@ -1,0 +1,460 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>Repackager.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">gturbine-maven-plugin</a> &gt; <a href="../index.html" class="el_bundle">gturbine-loader-tools</a> &gt; <a href="index.source.html" class="el_package">org.excellentcoder.gturbine.loader.tools</a> &gt; <span class="el_source">Repackager.java</span></div><h1>Repackager.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.excellentcoder.gturbine.loader.tools;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
+
+import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
+
+import org.excellentcoder.gturbine.loader.tools.JarWriter.EntryTransformer;
+import org.excellentcoder.gturbine.loader.tools.JarWriter.UnpackHandler;
+import org.springframework.core.io.support.SpringFactoriesLoader;
+import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
+
+/**
+ * Utility class that can be used to repackage an archive so that it can be executed using
+ * '{@literal java -jar}'.
+ *
+ * @author Phillip Webb
+ * @author Andy Wilkinson
+ * @author Stephane Nicoll
+ * @since 1.0.0
+ */
+public class Repackager {
+
+    private static final String                   MAIN_CLASS_ATTRIBUTE               = &quot;Main-Class&quot;;
+
+    private static final String                   START_CLASS_ATTRIBUTE              = &quot;Start-Class&quot;;
+
+    private static final String                   BOOT_VERSION_ATTRIBUTE             = &quot;Spring-Boot-Version&quot;;
+
+    private static final String                   BOOT_LIB_ATTRIBUTE                 = &quot;Spring-Boot-Lib&quot;;
+
+    private static final String                   BOOT_CLASSES_ATTRIBUTE             = &quot;Spring-Boot-Classes&quot;;
+
+<span class="nc" id="L61">    private static final byte[]                   ZIP_FILE_HEADER                    = new byte[] {</span>
+            'P', 'K', 3, 4                                                          };
+
+<span class="nc" id="L64">    private static final long                     FIND_WARNING_TIMEOUT               = TimeUnit.SECONDS</span>
+<span class="nc" id="L65">                                                                                         .toMillis(10);</span>
+
+    private static final String                   SPRING_BOOT_APPLICATION_CLASS_NAME = &quot;org.springframework.boot.autoconfigure.SpringBootApplication&quot;;
+
+<span class="nc" id="L69">    private List&lt;MainClassTimeoutWarningListener&gt; mainClassTimeoutListeners          = new ArrayList&lt;&gt;();</span>
+
+    private String                                mainClass;
+
+<span class="nc" id="L73">    private boolean                               backupSource                       = true;</span>
+
+    private final File                            source;
+
+    private Layout                                layout;
+
+    private LayoutFactory                         layoutFactory;
+
+    public Repackager(File source) {
+<span class="nc" id="L82">        this(source, null);</span>
+<span class="nc" id="L83">    }</span>
+
+<span class="nc" id="L85">    public Repackager(File source, LayoutFactory layoutFactory) {</span>
+<span class="nc bnc" id="L86" title="All 2 branches missed.">        if (source == null) {</span>
+<span class="nc" id="L87">            throw new IllegalArgumentException(&quot;Source file must be provided&quot;);</span>
+        }
+<span class="nc bnc" id="L89" title="All 4 branches missed.">        if (!source.exists() || !source.isFile()) {</span>
+<span class="nc" id="L90">            throw new IllegalArgumentException(&quot;Source must refer to an existing file, got &quot;</span>
+<span class="nc" id="L91">                                               + source.getAbsolutePath());</span>
+        }
+<span class="nc" id="L93">        this.source = source.getAbsoluteFile();</span>
+<span class="nc" id="L94">        this.layoutFactory = layoutFactory;</span>
+<span class="nc" id="L95">    }</span>
+
+    /**
+     * Add a listener that will be triggered to display a warning if searching for the
+     * main class takes too long.
+     * @param listener the listener to add
+     */
+    public void addMainClassTimeoutWarningListener(MainClassTimeoutWarningListener listener) {
+<span class="nc" id="L103">        this.mainClassTimeoutListeners.add(listener);</span>
+<span class="nc" id="L104">    }</span>
+
+    /**
+     * Sets the main class that should be run. If not specified the value from the
+     * MANIFEST will be used, or if no manifest entry is found the archive will be
+     * searched for a suitable class.
+     * @param mainClass the main class name
+     */
+    public void setMainClass(String mainClass) {
+<span class="nc" id="L113">        this.mainClass = mainClass;</span>
+<span class="nc" id="L114">    }</span>
+
+    /**
+     * Sets if source files should be backed up when they would be overwritten.
+     * @param backupSource if source files should be backed up
+     */
+    public void setBackupSource(boolean backupSource) {
+<span class="nc" id="L121">        this.backupSource = backupSource;</span>
+<span class="nc" id="L122">    }</span>
+
+    /**
+     * Sets the layout to use for the jar. Defaults to {@link Layouts#forFile(File)}.
+     * @param layout the layout
+     */
+    public void setLayout(Layout layout) {
+<span class="nc bnc" id="L129" title="All 2 branches missed.">        if (layout == null) {</span>
+<span class="nc" id="L130">            throw new IllegalArgumentException(&quot;Layout must not be null&quot;);</span>
+        }
+<span class="nc" id="L132">        this.layout = layout;</span>
+<span class="nc" id="L133">    }</span>
+
+    /**
+     * Sets the layout factory for the jar. The factory can be used when no specific
+     * layout is specified.
+     * @param layoutFactory the layout factory to set
+     */
+    public void setLayoutFactory(LayoutFactory layoutFactory) {
+<span class="nc" id="L141">        this.layoutFactory = layoutFactory;</span>
+<span class="nc" id="L142">    }</span>
+
+    /**
+     * Repackage the source file so that it can be run using '{@literal java -jar}'.
+     * @param libraries the libraries required to run the archive
+     * @throws IOException if the file cannot be repackaged
+     */
+    public void repackage(Libraries libraries) throws IOException {
+<span class="nc" id="L150">        repackage(this.source, libraries);</span>
+<span class="nc" id="L151">    }</span>
+
+    /**
+     * Repackage to the given destination so that it can be launched using '
+     * {@literal java -jar}'.
+     * @param destination the destination file (may be the same as the source)
+     * @param libraries the libraries required to run the archive
+     * @throws IOException if the file cannot be repackaged
+     */
+    public void repackage(File destination, Libraries libraries) throws IOException {
+<span class="nc" id="L161">        repackage(destination, libraries, null);</span>
+<span class="nc" id="L162">    }</span>
+
+    /**
+     * Repackage to the given destination so that it can be launched using '
+     * {@literal java -jar}'.
+     * @param destination the destination file (may be the same as the source)
+     * @param libraries the libraries required to run the archive
+     * @param launchScript an optional launch script prepended to the front of the jar
+     * @throws IOException if the file cannot be repackaged
+     * @since 1.3.0
+     */
+    public void repackage(File destination, Libraries libraries, LaunchScript launchScript)
+                                                                                           throws IOException {
+<span class="nc bnc" id="L175" title="All 4 branches missed.">        if (destination == null || destination.isDirectory()) {</span>
+<span class="nc" id="L176">            throw new IllegalArgumentException(&quot;Invalid destination&quot;);</span>
+        }
+<span class="nc bnc" id="L178" title="All 2 branches missed.">        if (libraries == null) {</span>
+<span class="nc" id="L179">            throw new IllegalArgumentException(&quot;Libraries must not be null&quot;);</span>
+        }
+<span class="nc bnc" id="L181" title="All 2 branches missed.">        if (this.layout == null) {</span>
+<span class="nc" id="L182">            this.layout = getLayoutFactory().getLayout(this.source);</span>
+        }
+<span class="nc" id="L184">        destination = destination.getAbsoluteFile();</span>
+<span class="nc" id="L185">        File workingSource = this.source;</span>
+<span class="nc bnc" id="L186" title="All 4 branches missed.">        if (alreadyRepackaged() &amp;&amp; this.source.equals(destination)) {</span>
+<span class="nc" id="L187">            return;</span>
+        }
+<span class="nc bnc" id="L189" title="All 2 branches missed.">        if (this.source.equals(destination)) {</span>
+<span class="nc" id="L190">            workingSource = getBackupFile();</span>
+<span class="nc" id="L191">            workingSource.delete();</span>
+<span class="nc" id="L192">            renameFile(this.source, workingSource);</span>
+        }
+<span class="nc" id="L194">        destination.delete();</span>
+        try {
+<span class="nc" id="L196">            try (JarFile jarFileSource = new JarFile(workingSource)) {</span>
+<span class="nc" id="L197">                repackage(jarFileSource, destination, libraries, launchScript);</span>
+<span class="nc bnc" id="L198" title="All 8 branches missed.">            }</span>
+        } finally {
+<span class="nc bnc" id="L200" title="All 8 branches missed.">            if (!this.backupSource &amp;&amp; !this.source.equals(workingSource)) {</span>
+<span class="nc" id="L201">                deleteFile(workingSource);</span>
+            }
+        }
+<span class="nc" id="L204">    }</span>
+
+    private LayoutFactory getLayoutFactory() {
+<span class="nc bnc" id="L207" title="All 2 branches missed.">        if (this.layoutFactory != null) {</span>
+<span class="nc" id="L208">            return this.layoutFactory;</span>
+        }
+<span class="nc" id="L210">        List&lt;LayoutFactory&gt; factories = SpringFactoriesLoader.loadFactories(LayoutFactory.class,</span>
+            null);
+<span class="nc bnc" id="L212" title="All 2 branches missed.">        if (factories.isEmpty()) {</span>
+<span class="nc" id="L213">            return new DefaultLayoutFactory();</span>
+        }
+<span class="nc bnc" id="L215" title="All 2 branches missed.">        Assert.state(factories.size() == 1, &quot;No unique LayoutFactory found&quot;);</span>
+<span class="nc" id="L216">        return factories.get(0);</span>
+    }
+
+    /**
+     * Return the {@link File} to use to backup the original source.
+     * @return the file to use to backup the original source
+     */
+    public final File getBackupFile() {
+<span class="nc" id="L224">        return new File(this.source.getParentFile(), this.source.getName() + &quot;.original&quot;);</span>
+    }
+
+    private boolean alreadyRepackaged() throws IOException {
+<span class="nc" id="L228">        try (JarFile jarFile = new JarFile(this.source)) {</span>
+<span class="nc" id="L229">            Manifest manifest = jarFile.getManifest();</span>
+<span class="nc bnc" id="L230" title="All 4 branches missed.">            return (manifest != null &amp;&amp; manifest.getMainAttributes().getValue(</span>
+                BOOT_VERSION_ATTRIBUTE) != null);
+<span class="nc bnc" id="L232" title="All 8 branches missed.">        }</span>
+    }
+
+    private void repackage(JarFile sourceJar, File destination, Libraries libraries,
+                           LaunchScript launchScript) throws IOException {
+<span class="nc" id="L237">        WritableLibraries writeableLibraries = new WritableLibraries(libraries);</span>
+<span class="nc" id="L238">        try (JarWriter writer = new JarWriter(destination, launchScript)) {</span>
+<span class="nc" id="L239">            writer.writeManifest(buildManifest(sourceJar));</span>
+<span class="nc" id="L240">            writeLoaderClasses(writer);</span>
+<span class="nc bnc" id="L241" title="All 2 branches missed.">            if (this.layout instanceof RepackagingLayout) {</span>
+<span class="nc" id="L242">                writer.writeEntries(sourceJar, new RenamingEntryTransformer(</span>
+<span class="nc" id="L243">                    ((RepackagingLayout) this.layout).getRepackagedClassesLocation()),</span>
+                    writeableLibraries);
+            } else {
+<span class="nc" id="L246">                writer.writeEntries(sourceJar, writeableLibraries);</span>
+            }
+<span class="nc" id="L248">            writeableLibraries.write(writer);</span>
+<span class="nc bnc" id="L249" title="All 8 branches missed.">        }</span>
+<span class="nc" id="L250">    }</span>
+
+    private void writeLoaderClasses(JarWriter writer) throws IOException {
+<span class="nc bnc" id="L253" title="All 2 branches missed.">        if (this.layout instanceof CustomLoaderLayout) {</span>
+<span class="nc" id="L254">            ((CustomLoaderLayout) this.layout).writeLoadedClasses(writer);</span>
+<span class="nc bnc" id="L255" title="All 2 branches missed.">        } else if (this.layout.isExecutable()) {</span>
+<span class="nc" id="L256">            writer.writeLoaderClasses();</span>
+        }
+<span class="nc" id="L258">    }</span>
+
+    private boolean isZip(File file) {
+        try {
+<span class="nc" id="L262">            try (FileInputStream fileInputStream = new FileInputStream(file)) {</span>
+<span class="nc" id="L263">                return isZip(fileInputStream);</span>
+<span class="nc bnc" id="L264" title="All 8 branches missed.">            }</span>
+<span class="nc" id="L265">        } catch (IOException ex) {</span>
+<span class="nc" id="L266">            return false;</span>
+        }
+    }
+
+    private boolean isZip(InputStream inputStream) throws IOException {
+<span class="nc bnc" id="L271" title="All 2 branches missed.">        for (byte magicByte : ZIP_FILE_HEADER) {</span>
+<span class="nc bnc" id="L272" title="All 2 branches missed.">            if (inputStream.read() != magicByte) {</span>
+<span class="nc" id="L273">                return false;</span>
+            }
+        }
+<span class="nc" id="L276">        return true;</span>
+    }
+
+    private Manifest buildManifest(JarFile source) throws IOException {
+<span class="nc" id="L280">        Manifest manifest = source.getManifest();</span>
+<span class="nc bnc" id="L281" title="All 2 branches missed.">        if (manifest == null) {</span>
+<span class="nc" id="L282">            manifest = new Manifest();</span>
+<span class="nc" id="L283">            manifest.getMainAttributes().putValue(&quot;Manifest-Version&quot;, &quot;1.0&quot;);</span>
+        }
+<span class="nc" id="L285">        manifest = new Manifest(manifest);</span>
+<span class="nc" id="L286">        String startClass = this.mainClass;</span>
+<span class="nc bnc" id="L287" title="All 2 branches missed.">        if (startClass == null) {</span>
+<span class="nc" id="L288">            startClass = manifest.getMainAttributes().getValue(MAIN_CLASS_ATTRIBUTE);</span>
+        }
+<span class="nc bnc" id="L290" title="All 2 branches missed.">        if (startClass == null) {</span>
+<span class="nc" id="L291">            startClass = findMainMethodWithTimeoutWarning(source);</span>
+        }
+<span class="nc" id="L293">        String launcherClassName = this.layout.getLauncherClassName();</span>
+<span class="nc bnc" id="L294" title="All 2 branches missed.">        if (launcherClassName != null) {</span>
+<span class="nc" id="L295">            manifest.getMainAttributes().putValue(MAIN_CLASS_ATTRIBUTE, launcherClassName);</span>
+<span class="nc bnc" id="L296" title="All 2 branches missed.">            if (startClass == null) {</span>
+<span class="nc" id="L297">                throw new IllegalStateException(&quot;Unable to find main class&quot;);</span>
+            }
+<span class="nc" id="L299">            manifest.getMainAttributes().putValue(START_CLASS_ATTRIBUTE, startClass);</span>
+<span class="nc bnc" id="L300" title="All 2 branches missed.">        } else if (startClass != null) {</span>
+<span class="nc" id="L301">            manifest.getMainAttributes().putValue(MAIN_CLASS_ATTRIBUTE, startClass);</span>
+        }
+<span class="nc" id="L303">        String bootVersion = getClass().getPackage().getImplementationVersion();</span>
+<span class="nc" id="L304">        manifest.getMainAttributes().putValue(BOOT_VERSION_ATTRIBUTE, bootVersion);</span>
+<span class="nc bnc" id="L305" title="All 2 branches missed.">        manifest.getMainAttributes().putValue(</span>
+            BOOT_CLASSES_ATTRIBUTE,
+            (this.layout instanceof RepackagingLayout) ? ((RepackagingLayout) this.layout)
+<span class="nc" id="L308">                .getRepackagedClassesLocation() : this.layout.getClassesLocation());</span>
+<span class="nc" id="L309">        String lib = this.layout.getLibraryDestination(&quot;&quot;, LibraryScope.COMPILE);</span>
+<span class="nc bnc" id="L310" title="All 2 branches missed.">        if (StringUtils.hasLength(lib)) {</span>
+<span class="nc" id="L311">            manifest.getMainAttributes().putValue(BOOT_LIB_ATTRIBUTE, lib);</span>
+        }
+<span class="nc" id="L313">        return manifest;</span>
+    }
+
+    private String findMainMethodWithTimeoutWarning(JarFile source) throws IOException {
+<span class="nc" id="L317">        long startTime = System.currentTimeMillis();</span>
+<span class="nc" id="L318">        String mainMethod = findMainMethod(source);</span>
+<span class="nc" id="L319">        long duration = System.currentTimeMillis() - startTime;</span>
+<span class="nc bnc" id="L320" title="All 2 branches missed.">        if (duration &gt; FIND_WARNING_TIMEOUT) {</span>
+<span class="nc bnc" id="L321" title="All 2 branches missed.">            for (MainClassTimeoutWarningListener listener : this.mainClassTimeoutListeners) {</span>
+<span class="nc" id="L322">                listener.handleTimeoutWarning(duration, mainMethod);</span>
+<span class="nc" id="L323">            }</span>
+        }
+<span class="nc" id="L325">        return mainMethod;</span>
+    }
+
+    protected String findMainMethod(JarFile source) throws IOException {
+<span class="nc" id="L329">        return MainClassFinder.findSingleMainClass(source, this.layout.getClassesLocation(),</span>
+            SPRING_BOOT_APPLICATION_CLASS_NAME);
+    }
+
+    private void renameFile(File file, File dest) {
+<span class="nc bnc" id="L334" title="All 2 branches missed.">        if (!file.renameTo(dest)) {</span>
+<span class="nc" id="L335">            throw new IllegalStateException(&quot;Unable to rename '&quot; + file + &quot;' to '&quot; + dest + &quot;'&quot;);</span>
+        }
+<span class="nc" id="L337">    }</span>
+
+    private void deleteFile(File file) {
+<span class="nc bnc" id="L340" title="All 2 branches missed.">        if (!file.delete()) {</span>
+<span class="nc" id="L341">            throw new IllegalStateException(&quot;Unable to delete '&quot; + file + &quot;'&quot;);</span>
+        }
+<span class="nc" id="L343">    }</span>
+
+    /**
+     * Callback interface used to present a warning when finding the main class takes too
+     * long.
+     */
+    @FunctionalInterface
+    public interface MainClassTimeoutWarningListener {
+
+        /**
+         * Handle a timeout warning.
+         * @param duration the amount of time it took to find the main method
+         * @param mainMethod the main method that was actually found
+         */
+        void handleTimeoutWarning(long duration, String mainMethod);
+
+    }
+
+    /**
+     * An {@code EntryTransformer} that renames entries by applying a prefix.
+     */
+    private static final class RenamingEntryTransformer implements EntryTransformer {
+
+        private final String namePrefix;
+
+<span class="nc" id="L368">        private RenamingEntryTransformer(String namePrefix) {</span>
+<span class="nc" id="L369">            this.namePrefix = namePrefix;</span>
+<span class="nc" id="L370">        }</span>
+
+        @Override
+        public JarArchiveEntry transform(JarArchiveEntry entry) {
+<span class="nc bnc" id="L374" title="All 2 branches missed.">            if (entry.getName().equals(&quot;META-INF/INDEX.LIST&quot;)) {</span>
+<span class="nc" id="L375">                return null;</span>
+            }
+<span class="nc bnc" id="L377" title="All 2 branches missed.">            if ((entry.getName().startsWith(&quot;META-INF/&quot;)</span>
+<span class="nc bnc" id="L378" title="All 4 branches missed.">                 &amp;&amp; !entry.getName().equals(&quot;META-INF/aop.xml&quot;) &amp;&amp; !entry.getName().endsWith(</span>
+                &quot;.kotlin_module&quot;))
+<span class="nc bnc" id="L380" title="All 2 branches missed.">                || entry.getName().startsWith(&quot;BOOT-INF/&quot;)</span>
+<span class="nc bnc" id="L381" title="All 2 branches missed.">                || entry.getName().equals(&quot;module-info.class&quot;)) {</span>
+<span class="nc" id="L382">                return entry;</span>
+            }
+<span class="nc" id="L384">            JarArchiveEntry renamedEntry = new JarArchiveEntry(this.namePrefix + entry.getName());</span>
+<span class="nc" id="L385">            renamedEntry.setTime(entry.getTime());</span>
+<span class="nc" id="L386">            renamedEntry.setSize(entry.getSize());</span>
+<span class="nc" id="L387">            renamedEntry.setMethod(entry.getMethod());</span>
+<span class="nc bnc" id="L388" title="All 2 branches missed.">            if (entry.getComment() != null) {</span>
+<span class="nc" id="L389">                renamedEntry.setComment(entry.getComment());</span>
+            }
+<span class="nc" id="L391">            renamedEntry.setCompressedSize(entry.getCompressedSize());</span>
+<span class="nc" id="L392">            renamedEntry.setCrc(entry.getCrc());</span>
+<span class="nc bnc" id="L393" title="All 2 branches missed.">            if (entry.getCreationTime() != null) {</span>
+<span class="nc" id="L394">                renamedEntry.setCreationTime(entry.getCreationTime());</span>
+            }
+<span class="nc bnc" id="L396" title="All 2 branches missed.">            if (entry.getExtra() != null) {</span>
+<span class="nc" id="L397">                renamedEntry.setExtra(entry.getExtra());</span>
+            }
+<span class="nc bnc" id="L399" title="All 2 branches missed.">            if (entry.getLastAccessTime() != null) {</span>
+<span class="nc" id="L400">                renamedEntry.setLastAccessTime(entry.getLastAccessTime());</span>
+            }
+<span class="nc bnc" id="L402" title="All 2 branches missed.">            if (entry.getLastModifiedTime() != null) {</span>
+<span class="nc" id="L403">                renamedEntry.setLastModifiedTime(entry.getLastModifiedTime());</span>
+            }
+<span class="nc" id="L405">            return renamedEntry;</span>
+        }
+
+    }
+
+    /**
+     * An {@link UnpackHandler} that determines that an entry needs to be unpacked if a
+     * library that requires unpacking has a matching entry name.
+     */
+    private final class WritableLibraries implements UnpackHandler {
+
+<span class="nc" id="L416">        private final Map&lt;String, Library&gt; libraryEntryNames = new LinkedHashMap&lt;&gt;();</span>
+
+<span class="nc" id="L418">        private WritableLibraries(Libraries libraries) throws IOException {</span>
+<span class="nc" id="L419">			libraries.doWithLibraries((library) -&gt; {</span>
+<span class="nc bnc" id="L420" title="All 2 branches missed.">				if (isZip(library.getFile())) {</span>
+<span class="nc" id="L421">					String libraryDestination = Repackager.this.layout.getLibraryDestination(library.getName(),</span>
+<span class="nc" id="L422">							library.getScope());</span>
+<span class="nc bnc" id="L423" title="All 2 branches missed.">					if (libraryDestination != null) {</span>
+<span class="nc" id="L424">						Library existing = this.libraryEntryNames.putIfAbsent(libraryDestination + library.getName(),</span>
+								library);
+<span class="nc bnc" id="L426" title="All 2 branches missed.">						if (existing != null) {</span>
+<span class="nc" id="L427">							throw new IllegalStateException(&quot;Duplicate library &quot; + library.getName());</span>
+						}
+					}
+				}
+<span class="nc" id="L431">			});</span>
+<span class="nc" id="L432">		}</span>
+
+        @Override
+        public boolean requiresUnpack(String name) {
+<span class="nc" id="L436">            Library library = this.libraryEntryNames.get(name);</span>
+<span class="nc bnc" id="L437" title="All 4 branches missed.">            return library != null &amp;&amp; library.isUnpackRequired();</span>
+        }
+
+        @Override
+        public String sha1Hash(String name) throws IOException {
+<span class="nc" id="L442">            Library library = this.libraryEntryNames.get(name);</span>
+<span class="nc bnc" id="L443" title="All 2 branches missed.">            if (library == null) {</span>
+<span class="nc" id="L444">                throw new IllegalArgumentException(&quot;No library found for entry name '&quot; + name + &quot;'&quot;);</span>
+            }
+<span class="nc" id="L446">            return FileUtils.sha1Hash(library.getFile());</span>
+        }
+
+        private void write(JarWriter writer) throws IOException {
+<span class="nc bnc" id="L450" title="All 2 branches missed.">            for (Entry&lt;String, Library&gt; entry : this.libraryEntryNames.entrySet()) {</span>
+<span class="nc" id="L451">                writer.writeNestedLibrary(</span>
+<span class="nc" id="L452">                    entry.getKey().substring(0, entry.getKey().lastIndexOf('/') + 1),</span>
+<span class="nc" id="L453">                    entry.getValue());</span>
+<span class="nc" id="L454">            }</span>
+<span class="nc" id="L455">        }</span>
+
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

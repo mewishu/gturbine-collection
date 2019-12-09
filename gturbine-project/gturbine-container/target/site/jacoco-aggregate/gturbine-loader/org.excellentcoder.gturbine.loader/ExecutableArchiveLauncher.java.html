@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ExecutableArchiveLauncher.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">gturbine-container</a> &gt; <a href="../index.html" class="el_bundle">gturbine-loader</a> &gt; <a href="index.source.html" class="el_package">org.excellentcoder.gturbine.loader</a> &gt; <span class="el_source">ExecutableArchiveLauncher.java</span></div><h1>ExecutableArchiveLauncher.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.excellentcoder.gturbine.loader;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.jar.JarEntry;
+import java.util.jar.Manifest;
+
+import org.excellentcoder.gturbine.loader.archive.Archive;
+
+/**
+ * Base class for executable archive {@link Launcher}s.
+ *
+ * @author Phillip Webb
+ * @author Andy Wilkinson
+ * @since 1.0.0
+ */
+public abstract class ExecutableArchiveLauncher extends Launcher {
+
+    private final Archive archive;
+
+<span class="nc" id="L37">    public ExecutableArchiveLauncher() {</span>
+        try {
+<span class="nc" id="L39">            this.archive = createArchive();</span>
+<span class="nc" id="L40">        } catch (Exception ex) {</span>
+<span class="nc" id="L41">            throw new IllegalStateException(ex);</span>
+<span class="nc" id="L42">        }</span>
+<span class="nc" id="L43">    }</span>
+
+<span class="nc" id="L45">    protected ExecutableArchiveLauncher(Archive archive) {</span>
+<span class="nc" id="L46">        this.archive = archive;</span>
+<span class="nc" id="L47">    }</span>
+
+    protected final Archive getArchive() {
+<span class="nc" id="L50">        return this.archive;</span>
+    }
+
+    @Override
+    protected String getMainClass() throws Exception {
+<span class="nc" id="L55">        Manifest manifest = this.archive.getManifest();</span>
+<span class="nc" id="L56">        String mainClass = null;</span>
+<span class="nc bnc" id="L57" title="All 2 branches missed.">        if (manifest != null) {</span>
+<span class="nc" id="L58">            mainClass = manifest.getMainAttributes().getValue(&quot;Start-Class&quot;);</span>
+        }
+<span class="nc bnc" id="L60" title="All 2 branches missed.">        if (mainClass == null) {</span>
+<span class="nc" id="L61">            throw new IllegalStateException(&quot;No 'Start-Class' manifest entry specified in &quot; + this);</span>
+        }
+<span class="nc" id="L63">        return mainClass;</span>
+    }
+
+    @Override
+    protected List&lt;Archive&gt; getClassPathArchives() throws Exception {
+<span class="nc" id="L68">        List&lt;Archive&gt; archives = new ArrayList&lt;&gt;(this.archive.getNestedArchives(this::isNestedArchive));</span>
+<span class="nc" id="L69">        postProcessClassPathArchives(archives);</span>
+<span class="nc" id="L70">        return archives;</span>
+    }
+
+    /**
+     * Determine if the specified {@link JarEntry} is a nested item that should be added
+     * to the classpath. The method is called once for each entry.
+     * @param entry the jar entry
+     * @return {@code true} if the entry is a nested item (jar or folder)
+     */
+    protected abstract boolean isNestedArchive(Archive.Entry entry);
+
+    /**
+     * Called to post-process archive entries before they are used. Implementations can
+     * add and remove entries.
+     * @param archives the archives
+     * @throws Exception if the post processing fails
+     */
+    protected void postProcessClassPathArchives(List&lt;Archive&gt; archives) throws Exception {
+<span class="nc" id="L88">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

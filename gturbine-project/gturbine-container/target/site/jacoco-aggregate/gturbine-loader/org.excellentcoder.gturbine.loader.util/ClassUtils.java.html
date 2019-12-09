@@ -1,0 +1,1270 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ClassUtils.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">gturbine-container</a> &gt; <a href="../index.html" class="el_bundle">gturbine-loader</a> &gt; <a href="index.source.html" class="el_package">org.excellentcoder.gturbine.loader.util</a> &gt; <span class="el_source">ClassUtils.java</span></div><h1>ClassUtils.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.excellentcoder.gturbine.loader.util;
+
+import java.beans.Introspector;
+import java.io.Closeable;
+import java.io.Externalizable;
+import java.io.Serializable;
+import java.lang.reflect.Array;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.Proxy;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.StringJoiner;
+
+/**
+ * Miscellaneous {@code java.lang.Class} utility methods.
+ * Mainly for internal use within the framework.
+ *
+ * @author Juergen Hoeller
+ * @author Keith Donald
+ * @author Rob Harrop
+ * @author Sam Brannen
+ * @since 1.1
+ */
+<span class="nc" id="L53">public abstract class ClassUtils {</span>
+
+    /** Suffix for array class names: {@code &quot;[]&quot;}. */
+    public static final String                   ARRAY_SUFFIX               = &quot;[]&quot;;
+
+    /** Prefix for internal array class names: {@code &quot;[&quot;}. */
+    private static final String                  INTERNAL_ARRAY_PREFIX      = &quot;[&quot;;
+
+    /** Prefix for internal non-primitive array class names: {@code &quot;[L&quot;}. */
+    private static final String                  NON_PRIMITIVE_ARRAY_PREFIX = &quot;[L&quot;;
+
+    /** The package separator character: {@code '.'}. */
+    private static final char                    PACKAGE_SEPARATOR          = '.';
+
+    /** The path separator character: {@code '/'}. */
+    private static final char                    PATH_SEPARATOR             = '/';
+
+    /** The inner class separator character: {@code '$'}. */
+    private static final char                    INNER_CLASS_SEPARATOR      = '$';
+
+    /** The CGLIB class separator: {@code &quot;$$&quot;}. */
+    public static final String                   CGLIB_CLASS_SEPARATOR      = &quot;$$&quot;;
+
+    /** The &quot;.class&quot; file suffix. */
+    public static final String                   CLASS_FILE_SUFFIX          = &quot;.class&quot;;
+
+    /**
+     * Map with primitive wrapper type as key and corresponding primitive
+     * type as value, for example: Integer.class -&gt; int.class.
+     */
+<span class="nc" id="L83">    private static final Map&lt;Class&lt;?&gt;, Class&lt;?&gt;&gt; primitiveWrapperTypeMap    = new IdentityHashMap&lt;&gt;(</span>
+                                                                                8);
+
+    /**
+     * Map with primitive type as key and corresponding wrapper
+     * type as value, for example: int.class -&gt; Integer.class.
+     */
+<span class="nc" id="L90">    private static final Map&lt;Class&lt;?&gt;, Class&lt;?&gt;&gt; primitiveTypeToWrapperMap  = new IdentityHashMap&lt;&gt;(</span>
+                                                                                8);
+
+    /**
+     * Map with primitive type name as key and corresponding primitive
+     * type as value, for example: &quot;int&quot; -&gt; &quot;int.class&quot;.
+     */
+<span class="nc" id="L97">    private static final Map&lt;String, Class&lt;?&gt;&gt;   primitiveTypeNameMap       = new HashMap&lt;&gt;(32);</span>
+
+    /**
+     * Map with common Java language class name as key and corresponding Class as value.
+     * Primarily for efficient deserialization of remote invocations.
+     */
+<span class="nc" id="L103">    private static final Map&lt;String, Class&lt;?&gt;&gt;   commonClassCache           = new HashMap&lt;&gt;(64);</span>
+
+    /**
+     * Common Java language interfaces which are supposed to be ignored
+     * when searching for 'primary' user-level interfaces.
+     */
+    private static final Set&lt;Class&lt;?&gt;&gt;           javaLanguageInterfaces;
+
+    static {
+<span class="nc" id="L112">        primitiveWrapperTypeMap.put(Boolean.class, boolean.class);</span>
+<span class="nc" id="L113">        primitiveWrapperTypeMap.put(Byte.class, byte.class);</span>
+<span class="nc" id="L114">        primitiveWrapperTypeMap.put(Character.class, char.class);</span>
+<span class="nc" id="L115">        primitiveWrapperTypeMap.put(Double.class, double.class);</span>
+<span class="nc" id="L116">        primitiveWrapperTypeMap.put(Float.class, float.class);</span>
+<span class="nc" id="L117">        primitiveWrapperTypeMap.put(Integer.class, int.class);</span>
+<span class="nc" id="L118">        primitiveWrapperTypeMap.put(Long.class, long.class);</span>
+<span class="nc" id="L119">        primitiveWrapperTypeMap.put(Short.class, short.class);</span>
+<span class="nc" id="L120">        primitiveWrapperTypeMap.put(Void.class, void.class);</span>
+
+        // Map entry iteration is less expensive to initialize than forEach with lambdas
+<span class="nc bnc" id="L123" title="All 2 branches missed.">        for (Map.Entry&lt;Class&lt;?&gt;, Class&lt;?&gt;&gt; entry : primitiveWrapperTypeMap.entrySet()) {</span>
+<span class="nc" id="L124">            primitiveTypeToWrapperMap.put(entry.getValue(), entry.getKey());</span>
+<span class="nc" id="L125">            registerCommonClasses(entry.getKey());</span>
+<span class="nc" id="L126">        }</span>
+
+<span class="nc" id="L128">        Set&lt;Class&lt;?&gt;&gt; primitiveTypes = new HashSet&lt;&gt;(32);</span>
+<span class="nc" id="L129">        primitiveTypes.addAll(primitiveWrapperTypeMap.values());</span>
+<span class="nc" id="L130">        Collections.addAll(primitiveTypes, boolean[].class, byte[].class, char[].class,</span>
+            double[].class, float[].class, int[].class, long[].class, short[].class);
+<span class="nc" id="L132">        primitiveTypes.add(void.class);</span>
+<span class="nc bnc" id="L133" title="All 2 branches missed.">        for (Class&lt;?&gt; primitiveType : primitiveTypes) {</span>
+<span class="nc" id="L134">            primitiveTypeNameMap.put(primitiveType.getName(), primitiveType);</span>
+<span class="nc" id="L135">        }</span>
+
+<span class="nc" id="L137">        registerCommonClasses(Boolean[].class, Byte[].class, Character[].class, Double[].class,</span>
+            Float[].class, Integer[].class, Long[].class, Short[].class);
+<span class="nc" id="L139">        registerCommonClasses(Number.class, Number[].class, String.class, String[].class,</span>
+            Class.class, Class[].class, Object.class, Object[].class);
+<span class="nc" id="L141">        registerCommonClasses(Throwable.class, Exception.class, RuntimeException.class,</span>
+            Error.class, StackTraceElement.class, StackTraceElement[].class);
+<span class="nc" id="L143">        registerCommonClasses(Enum.class, Iterable.class, Iterator.class, Enumeration.class,</span>
+            Collection.class, List.class, Set.class, Map.class, Map.Entry.class, Optional.class);
+
+<span class="nc" id="L146">        Class&lt;?&gt;[] javaLanguageInterfaceArray = { Serializable.class, Externalizable.class,</span>
+            Closeable.class, AutoCloseable.class, Cloneable.class, Comparable.class };
+<span class="nc" id="L148">        registerCommonClasses(javaLanguageInterfaceArray);</span>
+<span class="nc" id="L149">        javaLanguageInterfaces = new HashSet&lt;&gt;(Arrays.asList(javaLanguageInterfaceArray));</span>
+<span class="nc" id="L150">    }</span>
+
+    /**
+     * Assert that an object is not {@code null}.
+     * &lt;pre class=&quot;code&quot;&gt;Assert.notNull(clazz, &quot;The class must not be null&quot;);&lt;/pre&gt;
+     * @param object the object to check
+     * @param message the exception message to use if the assertion fails
+     * @throws IllegalArgumentException if the object is {@code null}
+     */
+    public static void notNull(Object object, String message) {
+<span class="nc bnc" id="L160" title="All 2 branches missed.">        if (object == null) {</span>
+<span class="nc" id="L161">            throw new IllegalArgumentException(message);</span>
+        }
+<span class="nc" id="L163">    }</span>
+
+    /**
+     * Register the given common classes with the ClassUtils cache.
+     */
+    private static void registerCommonClasses(Class&lt;?&gt;... commonClasses) {
+<span class="nc bnc" id="L169" title="All 2 branches missed.">        for (Class&lt;?&gt; clazz : commonClasses) {</span>
+<span class="nc" id="L170">            commonClassCache.put(clazz.getName(), clazz);</span>
+        }
+<span class="nc" id="L172">    }</span>
+
+    /**
+     * Return the default ClassLoader to use: typically the thread context
+     * ClassLoader, if available; the ClassLoader that loaded the ClassUtils
+     * class will be used as fallback.
+     * &lt;p&gt;Call this method if you intend to use the thread context ClassLoader
+     * in a scenario where you clearly prefer a non-null ClassLoader reference:
+     * for example, for class path resource loading (but not necessarily for
+     * {@code Class.forName}, which accepts a {@code null} ClassLoader
+     * reference as well).
+     * @return the default ClassLoader (only {@code null} if even the system
+     * ClassLoader isn't accessible)
+     * @see Thread#getContextClassLoader()
+     * @see ClassLoader#getSystemClassLoader()
+     */
+    public static ClassLoader getDefaultClassLoader() {
+<span class="nc" id="L189">        ClassLoader cl = null;</span>
+        try {
+<span class="nc" id="L191">            cl = Thread.currentThread().getContextClassLoader();</span>
+<span class="nc" id="L192">        } catch (Throwable ex) {</span>
+            // Cannot access thread context ClassLoader - falling back...
+<span class="nc" id="L194">        }</span>
+<span class="nc bnc" id="L195" title="All 2 branches missed.">        if (cl == null) {</span>
+            // No thread context class loader -&gt; use class loader of this class.
+<span class="nc" id="L197">            cl = ClassUtils.class.getClassLoader();</span>
+<span class="nc bnc" id="L198" title="All 2 branches missed.">            if (cl == null) {</span>
+                // getClassLoader() returning null indicates the bootstrap ClassLoader
+                try {
+<span class="nc" id="L201">                    cl = ClassLoader.getSystemClassLoader();</span>
+<span class="nc" id="L202">                } catch (Throwable ex) {</span>
+                    // Cannot access system ClassLoader - oh well, maybe the caller can live with null...
+<span class="nc" id="L204">                }</span>
+            }
+        }
+<span class="nc" id="L207">        return cl;</span>
+    }
+
+    /**
+     * Override the thread context ClassLoader with the environment's bean ClassLoader
+     * if necessary, i.e. if the bean ClassLoader is not equivalent to the thread
+     * context ClassLoader already.
+     * @param classLoaderToUse the actual ClassLoader to use for the thread context
+     * @return the original thread context ClassLoader, or {@code null} if not overridden
+     */
+    public static ClassLoader overrideThreadContextClassLoader(ClassLoader classLoaderToUse) {
+<span class="nc" id="L218">        Thread currentThread = Thread.currentThread();</span>
+<span class="nc" id="L219">        ClassLoader threadContextClassLoader = currentThread.getContextClassLoader();</span>
+<span class="nc bnc" id="L220" title="All 4 branches missed.">        if (classLoaderToUse != null &amp;&amp; !classLoaderToUse.equals(threadContextClassLoader)) {</span>
+<span class="nc" id="L221">            currentThread.setContextClassLoader(classLoaderToUse);</span>
+<span class="nc" id="L222">            return threadContextClassLoader;</span>
+        } else {
+<span class="nc" id="L224">            return null;</span>
+        }
+    }
+
+    /**
+     * Replacement for {@code Class.forName()} that also returns Class instances
+     * for primitives (e.g. &quot;int&quot;) and array class names (e.g. &quot;String[]&quot;).
+     * Furthermore, it is also capable of resolving inner class names in Java source
+     * style (e.g. &quot;java.lang.Thread.State&quot; instead of &quot;java.lang.Thread$State&quot;).
+     * @param name the name of the Class
+     * @param classLoader the class loader to use
+     * (may be {@code null}, which indicates the default class loader)
+     * @return a class instance for the supplied name
+     * @throws ClassNotFoundException if the class was not found
+     * @throws LinkageError if the class file could not be loaded
+     * @see Class#forName(String, boolean, ClassLoader)
+     */
+    public static Class&lt;?&gt; forName(String name, ClassLoader classLoader)
+                                                                        throws ClassNotFoundException,
+                                                                        LinkageError {
+
+<span class="nc" id="L245">        notNull(name, &quot;Name must not be null&quot;);</span>
+
+<span class="nc" id="L247">        Class&lt;?&gt; clazz = resolvePrimitiveClassName(name);</span>
+<span class="nc bnc" id="L248" title="All 2 branches missed.">        if (clazz == null) {</span>
+<span class="nc" id="L249">            clazz = commonClassCache.get(name);</span>
+        }
+<span class="nc bnc" id="L251" title="All 2 branches missed.">        if (clazz != null) {</span>
+<span class="nc" id="L252">            return clazz;</span>
+        }
+
+        // &quot;java.lang.String[]&quot; style arrays
+<span class="nc bnc" id="L256" title="All 2 branches missed.">        if (name.endsWith(ARRAY_SUFFIX)) {</span>
+<span class="nc" id="L257">            String elementClassName = name.substring(0, name.length() - ARRAY_SUFFIX.length());</span>
+<span class="nc" id="L258">            Class&lt;?&gt; elementClass = forName(elementClassName, classLoader);</span>
+<span class="nc" id="L259">            return Array.newInstance(elementClass, 0).getClass();</span>
+        }
+
+        // &quot;[Ljava.lang.String;&quot; style arrays
+<span class="nc bnc" id="L263" title="All 4 branches missed.">        if (name.startsWith(NON_PRIMITIVE_ARRAY_PREFIX) &amp;&amp; name.endsWith(&quot;;&quot;)) {</span>
+<span class="nc" id="L264">            String elementName = name.substring(NON_PRIMITIVE_ARRAY_PREFIX.length(),</span>
+<span class="nc" id="L265">                name.length() - 1);</span>
+<span class="nc" id="L266">            Class&lt;?&gt; elementClass = forName(elementName, classLoader);</span>
+<span class="nc" id="L267">            return Array.newInstance(elementClass, 0).getClass();</span>
+        }
+
+        // &quot;[[I&quot; or &quot;[[Ljava.lang.String;&quot; style arrays
+<span class="nc bnc" id="L271" title="All 2 branches missed.">        if (name.startsWith(INTERNAL_ARRAY_PREFIX)) {</span>
+<span class="nc" id="L272">            String elementName = name.substring(INTERNAL_ARRAY_PREFIX.length());</span>
+<span class="nc" id="L273">            Class&lt;?&gt; elementClass = forName(elementName, classLoader);</span>
+<span class="nc" id="L274">            return Array.newInstance(elementClass, 0).getClass();</span>
+        }
+
+<span class="nc" id="L277">        ClassLoader clToUse = classLoader;</span>
+<span class="nc bnc" id="L278" title="All 2 branches missed.">        if (clToUse == null) {</span>
+<span class="nc" id="L279">            clToUse = getDefaultClassLoader();</span>
+        }
+        try {
+<span class="nc" id="L282">            return Class.forName(name, false, clToUse);</span>
+<span class="nc" id="L283">        } catch (ClassNotFoundException ex) {</span>
+<span class="nc" id="L284">            int lastDotIndex = name.lastIndexOf(PACKAGE_SEPARATOR);</span>
+<span class="nc bnc" id="L285" title="All 2 branches missed.">            if (lastDotIndex != -1) {</span>
+<span class="nc" id="L286">                String innerClassName = name.substring(0, lastDotIndex) + INNER_CLASS_SEPARATOR</span>
+<span class="nc" id="L287">                                        + name.substring(lastDotIndex + 1);</span>
+                try {
+<span class="nc" id="L289">                    return Class.forName(innerClassName, false, clToUse);</span>
+<span class="nc" id="L290">                } catch (ClassNotFoundException ex2) {</span>
+                    // Swallow - let original exception get through
+                }
+            }
+<span class="nc" id="L294">            throw ex;</span>
+        }
+    }
+
+    /**
+     * Resolve the given class name into a Class instance. Supports
+     * primitives (like &quot;int&quot;) and array class names (like &quot;String[]&quot;).
+     * &lt;p&gt;This is effectively equivalent to the {@code forName}
+     * method with the same arguments, with the only difference being
+     * the exceptions thrown in case of class loading failure.
+     * @param className the name of the Class
+     * @param classLoader the class loader to use
+     * (may be {@code null}, which indicates the default class loader)
+     * @return a class instance for the supplied name
+     * @throws IllegalArgumentException if the class name was not resolvable
+     * (that is, the class could not be found or the class file could not be loaded)
+     * @throws IllegalStateException if the corresponding class is resolvable but
+     * there was a readability mismatch in the inheritance hierarchy of the class
+     * (typically a missing dependency declaration in a Jigsaw module definition
+     * for a superclass or interface implemented by the class to be loaded here)
+     * @see #forName(String, ClassLoader)
+     */
+    public static Class&lt;?&gt; resolveClassName(String className, ClassLoader classLoader)
+                                                                                      throws IllegalArgumentException {
+
+        try {
+<span class="nc" id="L320">            return forName(className, classLoader);</span>
+<span class="nc" id="L321">        } catch (IllegalAccessError err) {</span>
+<span class="nc" id="L322">            throw new IllegalStateException(</span>
+                &quot;Readability mismatch in inheritance hierarchy of class [&quot; + className + &quot;]: &quot;
+<span class="nc" id="L324">                        + err.getMessage(), err);</span>
+<span class="nc" id="L325">        } catch (LinkageError err) {</span>
+<span class="nc" id="L326">            throw new IllegalArgumentException(&quot;Unresolvable class definition for class [&quot;</span>
+                                               + className + &quot;]&quot;, err);
+<span class="nc" id="L328">        } catch (ClassNotFoundException ex) {</span>
+<span class="nc" id="L329">            throw new IllegalArgumentException(&quot;Could not find class [&quot; + className + &quot;]&quot;, ex);</span>
+        }
+    }
+
+    /**
+     * Determine whether the {@link Class} identified by the supplied name is present
+     * and can be loaded. Will return {@code false} if either the class or
+     * one of its dependencies is not present or cannot be loaded.
+     * @param className the name of the class to check
+     * @param classLoader the class loader to use
+     * (may be {@code null} which indicates the default class loader)
+     * @return whether the specified class is present (including all of its
+     * superclasses and interfaces)
+     * @throws IllegalStateException if the corresponding class is resolvable but
+     * there was a readability mismatch in the inheritance hierarchy of the class
+     * (typically a missing dependency declaration in a Jigsaw module definition
+     * for a superclass or interface implemented by the class to be checked here)
+     */
+    public static boolean isPresent(String className, ClassLoader classLoader) {
+        try {
+<span class="nc" id="L349">            forName(className, classLoader);</span>
+<span class="nc" id="L350">            return true;</span>
+<span class="nc" id="L351">        } catch (IllegalAccessError err) {</span>
+<span class="nc" id="L352">            throw new IllegalStateException(</span>
+                &quot;Readability mismatch in inheritance hierarchy of class [&quot; + className + &quot;]: &quot;
+<span class="nc" id="L354">                        + err.getMessage(), err);</span>
+<span class="nc" id="L355">        } catch (Throwable ex) {</span>
+            // Typically ClassNotFoundException or NoClassDefFoundError...
+<span class="nc" id="L357">            return false;</span>
+        }
+    }
+
+    /**
+     * Check whether the given class is visible in the given ClassLoader.
+     * @param clazz the class to check (typically an interface)
+     * @param classLoader the ClassLoader to check against
+     * (may be {@code null} in which case this method will always return {@code true})
+     */
+    public static boolean isVisible(Class&lt;?&gt; clazz, ClassLoader classLoader) {
+<span class="nc bnc" id="L368" title="All 2 branches missed.">        if (classLoader == null) {</span>
+<span class="nc" id="L369">            return true;</span>
+        }
+        try {
+<span class="nc bnc" id="L372" title="All 2 branches missed.">            if (clazz.getClassLoader() == classLoader) {</span>
+<span class="nc" id="L373">                return true;</span>
+            }
+<span class="nc" id="L375">        } catch (SecurityException ex) {</span>
+            // Fall through to loadable check below
+<span class="nc" id="L377">        }</span>
+
+        // Visible if same Class can be loaded from given ClassLoader
+<span class="nc" id="L380">        return isLoadable(clazz, classLoader);</span>
+    }
+
+    /**
+     * Check whether the given class is cache-safe in the given context,
+     * i.e. whether it is loaded by the given ClassLoader or a parent of it.
+     * @param clazz the class to analyze
+     * @param classLoader the ClassLoader to potentially cache metadata in
+     * (may be {@code null} which indicates the system class loader)
+     */
+    public static boolean isCacheSafe(Class&lt;?&gt; clazz, ClassLoader classLoader) {
+<span class="nc" id="L391">        notNull(clazz, &quot;Class must not be null&quot;);</span>
+        try {
+<span class="nc" id="L393">            ClassLoader target = clazz.getClassLoader();</span>
+            // Common cases
+<span class="nc bnc" id="L395" title="All 4 branches missed.">            if (target == classLoader || target == null) {</span>
+<span class="nc" id="L396">                return true;</span>
+            }
+<span class="nc bnc" id="L398" title="All 2 branches missed.">            if (classLoader == null) {</span>
+<span class="nc" id="L399">                return false;</span>
+            }
+            // Check for match in ancestors -&gt; positive
+<span class="nc" id="L402">            ClassLoader current = classLoader;</span>
+<span class="nc bnc" id="L403" title="All 2 branches missed.">            while (current != null) {</span>
+<span class="nc" id="L404">                current = current.getParent();</span>
+<span class="nc bnc" id="L405" title="All 2 branches missed.">                if (current == target) {</span>
+<span class="nc" id="L406">                    return true;</span>
+                }
+            }
+            // Check for match in children -&gt; negative
+<span class="nc bnc" id="L410" title="All 2 branches missed.">            while (target != null) {</span>
+<span class="nc" id="L411">                target = target.getParent();</span>
+<span class="nc bnc" id="L412" title="All 2 branches missed.">                if (target == classLoader) {</span>
+<span class="nc" id="L413">                    return false;</span>
+                }
+            }
+<span class="nc" id="L416">        } catch (SecurityException ex) {</span>
+            // Fall through to loadable check below
+<span class="nc" id="L418">        }</span>
+
+        // Fallback for ClassLoaders without parent/child relationship:
+        // safe if same Class can be loaded from given ClassLoader
+<span class="nc bnc" id="L422" title="All 4 branches missed.">        return (classLoader != null &amp;&amp; isLoadable(clazz, classLoader));</span>
+    }
+
+    /**
+     * Check whether the given class is loadable in the given ClassLoader.
+     * @param clazz the class to check (typically an interface)
+     * @param classLoader the ClassLoader to check against
+     * @since 5.0.6
+     */
+    private static boolean isLoadable(Class&lt;?&gt; clazz, ClassLoader classLoader) {
+        try {
+<span class="nc bnc" id="L433" title="All 2 branches missed.">            return (clazz == classLoader.loadClass(clazz.getName()));</span>
+            // Else: different class with same name found
+<span class="nc" id="L435">        } catch (ClassNotFoundException ex) {</span>
+            // No corresponding class found at all
+<span class="nc" id="L437">            return false;</span>
+        }
+    }
+
+    /**
+     * Resolve the given class name as primitive class, if appropriate,
+     * according to the JVM's naming rules for primitive classes.
+     * &lt;p&gt;Also supports the JVM's internal class names for primitive arrays.
+     * Does &lt;i&gt;not&lt;/i&gt; support the &quot;[]&quot; suffix notation for primitive arrays;
+     * this is only supported by {@link #forName(String, ClassLoader)}.
+     * @param name the name of the potentially primitive class
+     * @return the primitive class, or {@code null} if the name does not denote
+     * a primitive class or primitive array class
+     */
+    public static Class&lt;?&gt; resolvePrimitiveClassName(String name) {
+<span class="nc" id="L452">        Class&lt;?&gt; result = null;</span>
+        // Most class names will be quite long, considering that they
+        // SHOULD sit in a package, so a length check is worthwhile.
+<span class="nc bnc" id="L455" title="All 4 branches missed.">        if (name != null &amp;&amp; name.length() &lt;= 8) {</span>
+            // Could be a primitive - likely.
+<span class="nc" id="L457">            result = primitiveTypeNameMap.get(name);</span>
+        }
+<span class="nc" id="L459">        return result;</span>
+    }
+
+    /**
+     * Check if the given class represents a primitive wrapper,
+     * i.e. Boolean, Byte, Character, Short, Integer, Long, Float, Double, or
+     * Void.
+     * @param clazz the class to check
+     * @return whether the given class is a primitive wrapper class
+     */
+    public static boolean isPrimitiveWrapper(Class&lt;?&gt; clazz) {
+<span class="nc" id="L470">        notNull(clazz, &quot;Class must not be null&quot;);</span>
+<span class="nc" id="L471">        return primitiveWrapperTypeMap.containsKey(clazz);</span>
+    }
+
+    /**
+     * Check if the given class represents a primitive (i.e. boolean, byte,
+     * char, short, int, long, float, or double), {@code void}, or a wrapper for
+     * those types (i.e. Boolean, Byte, Character, Short, Integer, Long, Float,
+     * Double, or Void).
+     * @param clazz the class to check
+     * @return {@code true} if the given class represents a primitive, void, or
+     * a wrapper class
+     */
+    public static boolean isPrimitiveOrWrapper(Class&lt;?&gt; clazz) {
+<span class="nc" id="L484">        notNull(clazz, &quot;Class must not be null&quot;);</span>
+<span class="nc bnc" id="L485" title="All 4 branches missed.">        return (clazz.isPrimitive() || isPrimitiveWrapper(clazz));</span>
+    }
+
+    /**
+     * Check if the given class represents an array of primitives,
+     * i.e. boolean, byte, char, short, int, long, float, or double.
+     * @param clazz the class to check
+     * @return whether the given class is a primitive array class
+     */
+    public static boolean isPrimitiveArray(Class&lt;?&gt; clazz) {
+<span class="nc" id="L495">        notNull(clazz, &quot;Class must not be null&quot;);</span>
+<span class="nc bnc" id="L496" title="All 4 branches missed.">        return (clazz.isArray() &amp;&amp; clazz.getComponentType().isPrimitive());</span>
+    }
+
+    /**
+     * Check if the given class represents an array of primitive wrappers,
+     * i.e. Boolean, Byte, Character, Short, Integer, Long, Float, or Double.
+     * @param clazz the class to check
+     * @return whether the given class is a primitive wrapper array class
+     */
+    public static boolean isPrimitiveWrapperArray(Class&lt;?&gt; clazz) {
+<span class="nc" id="L506">        notNull(clazz, &quot;Class must not be null&quot;);</span>
+<span class="nc bnc" id="L507" title="All 4 branches missed.">        return (clazz.isArray() &amp;&amp; isPrimitiveWrapper(clazz.getComponentType()));</span>
+    }
+
+    /**
+     * Resolve the given class if it is a primitive class,
+     * returning the corresponding primitive wrapper type instead.
+     * @param clazz the class to check
+     * @return the original class, or a primitive wrapper for the original primitive type
+     */
+    public static Class&lt;?&gt; resolvePrimitiveIfNecessary(Class&lt;?&gt; clazz) {
+<span class="nc" id="L517">        notNull(clazz, &quot;Class must not be null&quot;);</span>
+<span class="nc bnc" id="L518" title="All 4 branches missed.">        return (clazz.isPrimitive() &amp;&amp; clazz != void.class ? primitiveTypeToWrapperMap.get(clazz)</span>
+            : clazz);
+    }
+
+    /**
+     * Check if the right-hand side type may be assigned to the left-hand side
+     * type, assuming setting by reflection. Considers primitive wrapper
+     * classes as assignable to the corresponding primitive types.
+     * @param lhsType the target type
+     * @param rhsType the value type that should be assigned to the target type
+     * @return if the target type is assignable from the value type
+     */
+    public static boolean isAssignable(Class&lt;?&gt; lhsType, Class&lt;?&gt; rhsType) {
+<span class="nc" id="L531">        notNull(lhsType, &quot;Left-hand side type must not be null&quot;);</span>
+<span class="nc" id="L532">        notNull(rhsType, &quot;Right-hand side type must not be null&quot;);</span>
+<span class="nc bnc" id="L533" title="All 2 branches missed.">        if (lhsType.isAssignableFrom(rhsType)) {</span>
+<span class="nc" id="L534">            return true;</span>
+        }
+<span class="nc bnc" id="L536" title="All 2 branches missed.">        if (lhsType.isPrimitive()) {</span>
+<span class="nc" id="L537">            Class&lt;?&gt; resolvedPrimitive = primitiveWrapperTypeMap.get(rhsType);</span>
+<span class="nc bnc" id="L538" title="All 2 branches missed.">            if (lhsType == resolvedPrimitive) {</span>
+<span class="nc" id="L539">                return true;</span>
+            }
+<span class="nc" id="L541">        } else {</span>
+<span class="nc" id="L542">            Class&lt;?&gt; resolvedWrapper = primitiveTypeToWrapperMap.get(rhsType);</span>
+<span class="nc bnc" id="L543" title="All 4 branches missed.">            if (resolvedWrapper != null &amp;&amp; lhsType.isAssignableFrom(resolvedWrapper)) {</span>
+<span class="nc" id="L544">                return true;</span>
+            }
+        }
+<span class="nc" id="L547">        return false;</span>
+    }
+
+    /**
+     * Determine if the given type is assignable from the given value,
+     * assuming setting by reflection. Considers primitive wrapper classes
+     * as assignable to the corresponding primitive types.
+     * @param type the target type
+     * @param value the value that should be assigned to the type
+     * @return if the type is assignable from the value
+     */
+    public static boolean isAssignableValue(Class&lt;?&gt; type, Object value) {
+<span class="nc" id="L559">        notNull(type, &quot;Type must not be null&quot;);</span>
+<span class="nc bnc" id="L560" title="All 4 branches missed.">        return (value != null ? isAssignable(type, value.getClass()) : !type.isPrimitive());</span>
+    }
+
+    /**
+     * Convert a &quot;/&quot;-based resource path to a &quot;.&quot;-based fully qualified class name.
+     * @param resourcePath the resource path pointing to a class
+     * @return the corresponding fully qualified class name
+     */
+    public static String convertResourcePathToClassName(String resourcePath) {
+<span class="nc" id="L569">        notNull(resourcePath, &quot;Resource path must not be null&quot;);</span>
+<span class="nc" id="L570">        return resourcePath.replace(PATH_SEPARATOR, PACKAGE_SEPARATOR);</span>
+    }
+
+    /**
+     * Convert a &quot;.&quot;-based fully qualified class name to a &quot;/&quot;-based resource path.
+     * @param className the fully qualified class name
+     * @return the corresponding resource path, pointing to the class
+     */
+    public static String convertClassNameToResourcePath(String className) {
+<span class="nc" id="L579">        notNull(className, &quot;Class name must not be null&quot;);</span>
+<span class="nc" id="L580">        return className.replace(PACKAGE_SEPARATOR, PATH_SEPARATOR);</span>
+    }
+
+    /**
+     * Return a path suitable for use with {@code ClassLoader.getResource}
+     * (also suitable for use with {@code Class.getResource} by prepending a
+     * slash ('/') to the return value). Built by taking the package of the specified
+     * class file, converting all dots ('.') to slashes ('/'), adding a trailing slash
+     * if necessary, and concatenating the specified resource name to this.
+     * &lt;br/&gt;As such, this function may be used to build a path suitable for
+     * loading a resource file that is in the same package as a class file,
+     * although {ClassPathResource} is usually
+     * even more convenient.
+     * @param clazz the Class whose package will be used as the base
+     * @param resourceName the resource name to append. A leading slash is optional.
+     * @return the built-up resource path
+     * @see ClassLoader#getResource
+     * @see Class#getResource
+     */
+    public static String addResourcePathToPackagePath(Class&lt;?&gt; clazz, String resourceName) {
+<span class="nc" id="L600">        notNull(resourceName, &quot;Resource name must not be null&quot;);</span>
+<span class="nc bnc" id="L601" title="All 2 branches missed.">        if (!resourceName.startsWith(&quot;/&quot;)) {</span>
+<span class="nc" id="L602">            return classPackageAsResourcePath(clazz) + '/' + resourceName;</span>
+        }
+<span class="nc" id="L604">        return classPackageAsResourcePath(clazz) + resourceName;</span>
+    }
+
+    /**
+     * Given an input class object, return a string which consists of the
+     * class's package name as a pathname, i.e., all dots ('.') are replaced by
+     * slashes ('/'). Neither a leading nor trailing slash is added. The result
+     * could be concatenated with a slash and the name of a resource and fed
+     * directly to {@code ClassLoader.getResource()}. For it to be fed to
+     * {@code Class.getResource} instead, a leading slash would also have
+     * to be prepended to the returned value.
+     * @param clazz the input class. A {@code null} value or the default
+     * (empty) packontainerLauncher.age will result in an empty string (&quot;&quot;) being returned.
+     * @return a path which represents the package name
+     * @see ClassLoader#getResource
+     * @see Class#getResource
+     */
+    public static String classPackageAsResourcePath(Class&lt;?&gt; clazz) {
+<span class="nc bnc" id="L622" title="All 2 branches missed.">        if (clazz == null) {</span>
+<span class="nc" id="L623">            return &quot;&quot;;</span>
+        }
+<span class="nc" id="L625">        String className = clazz.getName();</span>
+<span class="nc" id="L626">        int packageEndIndex = className.lastIndexOf(PACKAGE_SEPARATOR);</span>
+<span class="nc bnc" id="L627" title="All 2 branches missed.">        if (packageEndIndex == -1) {</span>
+<span class="nc" id="L628">            return &quot;&quot;;</span>
+        }
+<span class="nc" id="L630">        String packageName = className.substring(0, packageEndIndex);</span>
+<span class="nc" id="L631">        return packageName.replace(PACKAGE_SEPARATOR, PATH_SEPARATOR);</span>
+    }
+
+    /**
+     * Build a String that consists of the names of the classes/interfaces
+     * in the given array.
+     * &lt;p&gt;Basically like {@code AbstractCollection.toString()}, but stripping
+     * the &quot;class &quot;/&quot;interface &quot; prefix before every class name.
+     * @param classes an array of Class objects
+     * @return a String of form &quot;[com.foo.Bar, com.foo.Baz]&quot;
+     * @see java.util.AbstractCollection#toString()
+     */
+    public static String classNamesToString(Class&lt;?&gt;... classes) {
+<span class="nc" id="L644">        return classNamesToString(Arrays.asList(classes));</span>
+    }
+
+    /**
+     * Build a String that consists of the names of the classes/interfaces
+     * in the given collection.
+     * &lt;p&gt;Basically like {@code AbstractCollection.toString()}, but stripping
+     * the &quot;class &quot;/&quot;interface &quot; prefix before every class name.
+     * @param classes a Collection of Class objects (may be {@code null})
+     * @return a String of form &quot;[com.foo.Bar, com.foo.Baz]&quot;
+     * @see java.util.AbstractCollection#toString()
+     */
+    public static String classNamesToString(Collection&lt;Class&lt;?&gt;&gt; classes) {
+<span class="nc bnc" id="L657" title="All 4 branches missed.">        if (classes == null || classes.isEmpty()) {</span>
+<span class="nc" id="L658">            return &quot;[]&quot;;</span>
+        }
+<span class="nc" id="L660">        StringJoiner stringJoiner = new StringJoiner(&quot;, &quot;, &quot;[&quot;, &quot;]&quot;);</span>
+<span class="nc bnc" id="L661" title="All 2 branches missed.">        for (Class&lt;?&gt; clazz : classes) {</span>
+<span class="nc" id="L662">            stringJoiner.add(clazz.getName());</span>
+<span class="nc" id="L663">        }</span>
+<span class="nc" id="L664">        return stringJoiner.toString();</span>
+    }
+
+    /**
+     * Copy the given {@code Collection} into a {@code Class} array.
+     * &lt;p&gt;The {@code Collection} must contain {@code Class} elements only.
+     * @param collection the {@code Collection} to copy
+     * @return the {@code Class} array
+     * @since 3.1
+     */
+    public static Class&lt;?&gt;[] toClassArray(Collection&lt;Class&lt;?&gt;&gt; collection) {
+<span class="nc" id="L675">        return collection.toArray(new Class&lt;?&gt;[0]);</span>
+    }
+
+    /**
+     * Return all interfaces that the given instance implements as an array,
+     * including ones implemented by superclasses.
+     * @param instance the instance to analyze for interfaces
+     * @return all interfaces that the given instance implements as an array
+     */
+    public static Class&lt;?&gt;[] getAllInterfaces(Object instance) {
+<span class="nc" id="L685">        notNull(instance, &quot;Instance must not be null&quot;);</span>
+<span class="nc" id="L686">        return getAllInterfacesForClass(instance.getClass());</span>
+    }
+
+    /**
+     * Return all interfaces that the given class implements as an array,
+     * including ones implemented by superclasses.
+     * &lt;p&gt;If the class itself is an interface, it gets returned as sole interface.
+     * @param clazz the class to analyze for interfaces
+     * @return all interfaces that the given object implements as an array
+     */
+    public static Class&lt;?&gt;[] getAllInterfacesForClass(Class&lt;?&gt; clazz) {
+<span class="nc" id="L697">        return getAllInterfacesForClass(clazz, null);</span>
+    }
+
+    /**
+     * Return all interfaces that the given class implements as an array,
+     * including ones implemented by superclasses.
+     * &lt;p&gt;If the class itself is an interface, it gets returned as sole interface.
+     * @param clazz the class to analyze for interfaces
+     * @param classLoader the ClassLoader that the interfaces need to be visible in
+     * (may be {@code null} when accepting all declared interfaces)
+     * @return all interfaces that the given object implements as an array
+     */
+    public static Class&lt;?&gt;[] getAllInterfacesForClass(Class&lt;?&gt; clazz, ClassLoader classLoader) {
+<span class="nc" id="L710">        return toClassArray(getAllInterfacesForClassAsSet(clazz, classLoader));</span>
+    }
+
+    /**
+     * Return all interfaces that the given instance implements as a Set,
+     * including ones implemented by superclasses.
+     * @param instance the instance to analyze for interfaces
+     * @return all interfaces that the given instance implements as a Set
+     */
+    public static Set&lt;Class&lt;?&gt;&gt; getAllInterfacesAsSet(Object instance) {
+<span class="nc" id="L720">        notNull(instance, &quot;Instance must not be null&quot;);</span>
+<span class="nc" id="L721">        return getAllInterfacesForClassAsSet(instance.getClass());</span>
+    }
+
+    /**
+     * Return all interfaces that the given class implements as a Set,
+     * including ones implemented by superclasses.
+     * &lt;p&gt;If the class itself is an interface, it gets returned as sole interface.
+     * @param clazz the class to analyze for interfaces
+     * @return all interfaces that the given object implements as a Set
+     */
+    public static Set&lt;Class&lt;?&gt;&gt; getAllInterfacesForClassAsSet(Class&lt;?&gt; clazz) {
+<span class="nc" id="L732">        return getAllInterfacesForClassAsSet(clazz, null);</span>
+    }
+
+    /**
+     * Return all interfaces that the given class implements as a Set,
+     * including ones implemented by superclasses.
+     * &lt;p&gt;If the class itself is an interface, it gets returned as sole interface.
+     * @param clazz the class to analyze for interfaces
+     * @param classLoader the ClassLoader that the interfaces need to be visible in
+     * (may be {@code null} when accepting all declared interfaces)
+     * @return all interfaces that the given object implements as a Set
+     */
+    public static Set&lt;Class&lt;?&gt;&gt; getAllInterfacesForClassAsSet(Class&lt;?&gt; clazz,
+                                                              ClassLoader classLoader) {
+<span class="nc" id="L746">        notNull(clazz, &quot;Class must not be null&quot;);</span>
+<span class="nc bnc" id="L747" title="All 4 branches missed.">        if (clazz.isInterface() &amp;&amp; isVisible(clazz, classLoader)) {</span>
+<span class="nc" id="L748">            return Collections.singleton(clazz);</span>
+        }
+<span class="nc" id="L750">        Set&lt;Class&lt;?&gt;&gt; interfaces = new LinkedHashSet&lt;&gt;();</span>
+<span class="nc" id="L751">        Class&lt;?&gt; current = clazz;</span>
+<span class="nc bnc" id="L752" title="All 2 branches missed.">        while (current != null) {</span>
+<span class="nc" id="L753">            Class&lt;?&gt;[] ifcs = current.getInterfaces();</span>
+<span class="nc bnc" id="L754" title="All 2 branches missed.">            for (Class&lt;?&gt; ifc : ifcs) {</span>
+<span class="nc bnc" id="L755" title="All 2 branches missed.">                if (isVisible(ifc, classLoader)) {</span>
+<span class="nc" id="L756">                    interfaces.add(ifc);</span>
+                }
+            }
+<span class="nc" id="L759">            current = current.getSuperclass();</span>
+<span class="nc" id="L760">        }</span>
+<span class="nc" id="L761">        return interfaces;</span>
+    }
+
+    /**
+     * Determine the common ancestor of the given classes, if any.
+     * @param clazz1 the class to introspect
+     * @param clazz2 the other class to introspect
+     * @return the common ancestor (i.e. common superclass, one interface
+     * extending the other), or {@code null} if none found. If any of the
+     * given classes is {@code null}, the other class will be returned.
+     * @since 3.2.6
+     */
+    public static Class&lt;?&gt; determineCommonAncestor(Class&lt;?&gt; clazz1, Class&lt;?&gt; clazz2) {
+<span class="nc bnc" id="L774" title="All 2 branches missed.">        if (clazz1 == null) {</span>
+<span class="nc" id="L775">            return clazz2;</span>
+        }
+<span class="nc bnc" id="L777" title="All 2 branches missed.">        if (clazz2 == null) {</span>
+<span class="nc" id="L778">            return clazz1;</span>
+        }
+<span class="nc bnc" id="L780" title="All 2 branches missed.">        if (clazz1.isAssignableFrom(clazz2)) {</span>
+<span class="nc" id="L781">            return clazz1;</span>
+        }
+<span class="nc bnc" id="L783" title="All 2 branches missed.">        if (clazz2.isAssignableFrom(clazz1)) {</span>
+<span class="nc" id="L784">            return clazz2;</span>
+        }
+<span class="nc" id="L786">        Class&lt;?&gt; ancestor = clazz1;</span>
+        do {
+<span class="nc" id="L788">            ancestor = ancestor.getSuperclass();</span>
+<span class="nc bnc" id="L789" title="All 4 branches missed.">            if (ancestor == null || Object.class == ancestor) {</span>
+<span class="nc" id="L790">                return null;</span>
+            }
+<span class="nc bnc" id="L792" title="All 2 branches missed.">        } while (!ancestor.isAssignableFrom(clazz2));</span>
+<span class="nc" id="L793">        return ancestor;</span>
+    }
+
+    /**
+     * Determine whether the given interface is a common Java language interface:
+     * {@link Serializable}, {@link Externalizable}, {@link Closeable}, {@link AutoCloseable},
+     * {@link Cloneable}, {@link Comparable} - all of which can be ignored when looking
+     * for 'primary' user-level interfaces. Common characteristics: no service-level
+     * operations, no bean property methods, no default methods.
+     * @param ifc the interface to check
+     * @since 5.0.3
+     */
+    public static boolean isJavaLanguageInterface(Class&lt;?&gt; ifc) {
+<span class="nc" id="L806">        return javaLanguageInterfaces.contains(ifc);</span>
+    }
+
+    /**
+     * Determine if the supplied class is an &lt;em&gt;inner class&lt;/em&gt;,
+     * i.e. a non-static member of an enclosing class.
+     * @return {@code true} if the supplied class is an inner class
+     * @since 5.0.5
+     * @see Class#isMemberClass()
+     */
+    public static boolean isInnerClass(Class&lt;?&gt; clazz) {
+<span class="nc bnc" id="L817" title="All 4 branches missed.">        return (clazz.isMemberClass() &amp;&amp; !Modifier.isStatic(clazz.getModifiers()));</span>
+    }
+
+    /**
+     * Return the user-defined class for the given instance: usually simply
+     * the class of the given instance, but the original class in case of a
+     * CGLIB-generated subclass.
+     * @param instance the instance to check
+     * @return the user-defined class
+     */
+    public static Class&lt;?&gt; getUserClass(Object instance) {
+<span class="nc" id="L828">        notNull(instance, &quot;Instance must not be null&quot;);</span>
+<span class="nc" id="L829">        return getUserClass(instance.getClass());</span>
+    }
+
+    /**
+     * Return the user-defined class for the given class: usually simply the given
+     * class, but the original class in case of a CGLIB-generated subclass.
+     * @param clazz the class to check
+     * @return the user-defined class
+     */
+    public static Class&lt;?&gt; getUserClass(Class&lt;?&gt; clazz) {
+<span class="nc bnc" id="L839" title="All 2 branches missed.">        if (clazz.getName().contains(CGLIB_CLASS_SEPARATOR)) {</span>
+<span class="nc" id="L840">            Class&lt;?&gt; superclass = clazz.getSuperclass();</span>
+<span class="nc bnc" id="L841" title="All 4 branches missed.">            if (superclass != null &amp;&amp; superclass != Object.class) {</span>
+<span class="nc" id="L842">                return superclass;</span>
+            }
+        }
+<span class="nc" id="L845">        return clazz;</span>
+    }
+
+    /**
+     * Return a descriptive name for the given object's type: usually simply
+     * the class name, but component type class name + &quot;[]&quot; for arrays,
+     * and an appended list of implemented interfaces for JDK proxies.
+     * @param value the value to introspect
+     * @return the qualified name of the class
+     */
+    public static String getDescriptiveType(Object value) {
+<span class="nc bnc" id="L856" title="All 2 branches missed.">        if (value == null) {</span>
+<span class="nc" id="L857">            return null;</span>
+        }
+<span class="nc" id="L859">        Class&lt;?&gt; clazz = value.getClass();</span>
+<span class="nc bnc" id="L860" title="All 2 branches missed.">        if (Proxy.isProxyClass(clazz)) {</span>
+<span class="nc" id="L861">            String prefix = clazz.getName() + &quot; implementing &quot;;</span>
+<span class="nc" id="L862">            StringJoiner result = new StringJoiner(&quot;,&quot;, prefix, &quot;&quot;);</span>
+<span class="nc bnc" id="L863" title="All 2 branches missed.">            for (Class&lt;?&gt; ifc : clazz.getInterfaces()) {</span>
+<span class="nc" id="L864">                result.add(ifc.getName());</span>
+            }
+<span class="nc" id="L866">            return result.toString();</span>
+        } else {
+<span class="nc" id="L868">            return clazz.getTypeName();</span>
+        }
+    }
+
+    /**
+     * Check whether the given class matches the user-specified type name.
+     * @param clazz the class to check
+     * @param typeName the type name to match
+     */
+    public static boolean matchesTypeName(Class&lt;?&gt; clazz, String typeName) {
+<span class="nc bnc" id="L878" title="All 6 branches missed.">        return (typeName != null &amp;&amp; (typeName.equals(clazz.getTypeName()) || typeName.equals(clazz</span>
+<span class="nc" id="L879">            .getSimpleName())));</span>
+    }
+
+    /**
+     * Assert that the given String is not empty; that is,
+     * it must not be {@code null} and not the empty String.
+     * &lt;pre class=&quot;code&quot;&gt;Assert.hasLength(name, &quot;Name must not be empty&quot;);&lt;/pre&gt;
+     * @param text the String to check
+     * @param message the exception message to use if the assertion fails
+     * @throws IllegalArgumentException if the text is empty
+     */
+    public static void hasLength(String text, String message) {
+<span class="nc bnc" id="L891" title="All 4 branches missed.">        if (text == null || text.isEmpty()) {</span>
+<span class="nc" id="L892">            throw new IllegalArgumentException(message);</span>
+        }
+<span class="nc" id="L894">    }</span>
+
+    /**
+     * Get the class name without the qualified package name.
+     * @param className the className to get the short name for
+     * @return the class name of the class without the package name
+     * @throws IllegalArgumentException if the className is empty
+     */
+    public static String getShortName(String className) {
+<span class="nc" id="L903">        hasLength(className, &quot;Class name must not be empty&quot;);</span>
+<span class="nc" id="L904">        int lastDotIndex = className.lastIndexOf(PACKAGE_SEPARATOR);</span>
+<span class="nc" id="L905">        int nameEndIndex = className.indexOf(CGLIB_CLASS_SEPARATOR);</span>
+<span class="nc bnc" id="L906" title="All 2 branches missed.">        if (nameEndIndex == -1) {</span>
+<span class="nc" id="L907">            nameEndIndex = className.length();</span>
+        }
+<span class="nc" id="L909">        String shortName = className.substring(lastDotIndex + 1, nameEndIndex);</span>
+<span class="nc" id="L910">        shortName = shortName.replace(INNER_CLASS_SEPARATOR, PACKAGE_SEPARATOR);</span>
+<span class="nc" id="L911">        return shortName;</span>
+    }
+
+    /**
+     * Get the class name without the qualified package name.
+     * @param clazz the class to get the short name for
+     * @return the class name of the class without the package name
+     */
+    public static String getShortName(Class&lt;?&gt; clazz) {
+<span class="nc" id="L920">        return getShortName(getQualifiedName(clazz));</span>
+    }
+
+    /**
+     * Return the short string name of a Java class in uncapitalized JavaBeans
+     * property format. Strips the outer class name in case of an inner class.
+     * @param clazz the class
+     * @return the short name rendered in a standard JavaBeans property format
+     * @see java.beans.Introspector#decapitalize(String)
+     */
+    public static String getShortNameAsProperty(Class&lt;?&gt; clazz) {
+<span class="nc" id="L931">        String shortName = getShortName(clazz);</span>
+<span class="nc" id="L932">        int dotIndex = shortName.lastIndexOf(PACKAGE_SEPARATOR);</span>
+<span class="nc bnc" id="L933" title="All 2 branches missed.">        shortName = (dotIndex != -1 ? shortName.substring(dotIndex + 1) : shortName);</span>
+<span class="nc" id="L934">        return Introspector.decapitalize(shortName);</span>
+    }
+
+    /**
+     * Determine the name of the class file, relative to the containing
+     * package: e.g. &quot;String.class&quot;
+     * @param clazz the class
+     * @return the file name of the &quot;.class&quot; file
+     */
+    public static String getClassFileName(Class&lt;?&gt; clazz) {
+<span class="nc" id="L944">        notNull(clazz, &quot;Class must not be null&quot;);</span>
+<span class="nc" id="L945">        String className = clazz.getName();</span>
+<span class="nc" id="L946">        int lastDotIndex = className.lastIndexOf(PACKAGE_SEPARATOR);</span>
+<span class="nc" id="L947">        return className.substring(lastDotIndex + 1) + CLASS_FILE_SUFFIX;</span>
+    }
+
+    /**
+     * Determine the name of the package of the given class,
+     * e.g. &quot;java.lang&quot; for the {@code java.lang.String} class.
+     * @param clazz the class
+     * @return the package name, or the empty String if the class
+     * is defined in the default package
+     */
+    public static String getPackageName(Class&lt;?&gt; clazz) {
+<span class="nc" id="L958">        notNull(clazz, &quot;Class must not be null&quot;);</span>
+<span class="nc" id="L959">        return getPackageName(clazz.getName());</span>
+    }
+
+    /**
+     * Determine the name of the package of the given fully-qualified class name,
+     * e.g. &quot;java.lang&quot; for the {@code java.lang.String} class name.
+     * @param fqClassName the fully-qualified class name
+     * @return the package name, or the empty String if the class
+     * is defined in the default package
+     */
+    public static String getPackageName(String fqClassName) {
+<span class="nc" id="L970">        notNull(fqClassName, &quot;Class name must not be null&quot;);</span>
+<span class="nc" id="L971">        int lastDotIndex = fqClassName.lastIndexOf(PACKAGE_SEPARATOR);</span>
+<span class="nc bnc" id="L972" title="All 2 branches missed.">        return (lastDotIndex != -1 ? fqClassName.substring(0, lastDotIndex) : &quot;&quot;);</span>
+    }
+
+    /**
+     * Return the qualified name of the given class: usually simply
+     * the class name, but component type class name + &quot;[]&quot; for arrays.
+     * @param clazz the class
+     * @return the qualified name of the class
+     */
+    public static String getQualifiedName(Class&lt;?&gt; clazz) {
+<span class="nc" id="L982">        notNull(clazz, &quot;Class must not be null&quot;);</span>
+<span class="nc" id="L983">        return clazz.getTypeName();</span>
+    }
+
+    /**
+     * Return the qualified name of the given method, consisting of
+     * fully qualified interface/class name + &quot;.&quot; + method name.
+     * @param method the method
+     * @return the qualified name of the method
+     */
+    public static String getQualifiedMethodName(Method method) {
+<span class="nc" id="L993">        return getQualifiedMethodName(method, null);</span>
+    }
+
+    /**
+     * Return the qualified name of the given method, consisting of
+     * fully qualified interface/class name + &quot;.&quot; + method name.
+     * @param method the method
+     * @param clazz the clazz that the method is being invoked on
+     * (may be {@code null} to indicate the method's declaring class)
+     * @return the qualified name of the method
+     * @since 4.3.4
+     */
+    public static String getQualifiedMethodName(Method method, Class&lt;?&gt; clazz) {
+<span class="nc" id="L1006">        notNull(method, &quot;Method must not be null&quot;);</span>
+<span class="nc bnc" id="L1007" title="All 2 branches missed.">        return (clazz != null ? clazz : method.getDeclaringClass()).getName() + '.'</span>
+<span class="nc" id="L1008">               + method.getName();</span>
+    }
+
+    /**
+     * Determine whether the given class has a public constructor with the given signature.
+     * &lt;p&gt;Essentially translates {@code NoSuchMethodException} to &quot;false&quot;.
+     * @param clazz the clazz to analyze
+     * @param paramTypes the parameter types of the method
+     * @return whether the class has a corresponding constructor
+     * @see Class#getMethod
+     */
+    public static boolean hasConstructor(Class&lt;?&gt; clazz, Class&lt;?&gt;... paramTypes) {
+<span class="nc bnc" id="L1020" title="All 2 branches missed.">        return (getConstructorIfAvailable(clazz, paramTypes) != null);</span>
+    }
+
+    /**
+     * Determine whether the given class has a public constructor with the given signature,
+     * and return it if available (else return {@code null}).
+     * &lt;p&gt;Essentially translates {@code NoSuchMethodException} to {@code null}.
+     * @param clazz the clazz to analyze
+     * @param paramTypes the parameter types of the method
+     * @return the constructor, or {@code null} if not found
+     * @see Class#getConstructor
+     */
+    public static &lt;T&gt; Constructor&lt;T&gt; getConstructorIfAvailable(Class&lt;T&gt; clazz,
+                                                               Class&lt;?&gt;... paramTypes) {
+<span class="nc" id="L1034">        notNull(clazz, &quot;Class must not be null&quot;);</span>
+        try {
+<span class="nc" id="L1036">            return clazz.getConstructor(paramTypes);</span>
+<span class="nc" id="L1037">        } catch (NoSuchMethodException ex) {</span>
+<span class="nc" id="L1038">            return null;</span>
+        }
+    }
+
+    /**
+     * Determine whether the given class has a public method with the given signature.
+     * &lt;p&gt;Essentially translates {@code NoSuchMethodException} to &quot;false&quot;.
+     * @param clazz the clazz to analyze
+     * @param methodName the name of the method
+     * @param paramTypes the parameter types of the method
+     * @return whether the class has a corresponding method
+     * @see Class#getMethod
+     */
+    public static boolean hasMethod(Class&lt;?&gt; clazz, String methodName, Class&lt;?&gt;... paramTypes) {
+<span class="nc bnc" id="L1052" title="All 2 branches missed.">        return (getMethodIfAvailable(clazz, methodName, paramTypes) != null);</span>
+    }
+
+    /**
+     * Determine whether the given class has a public method with the given signature,
+     * and return it if available (else throws an {@code IllegalStateException}).
+     * &lt;p&gt;In case of any signature specified, only returns the method if there is a
+     * unique candidate, i.e. a single public method with the specified name.
+     * &lt;p&gt;Essentially translates {@code NoSuchMethodException} to {@code IllegalStateException}.
+     * @param clazz the clazz to analyze
+     * @param methodName the name of the method
+     * @param paramTypes the parameter types of the method
+     * (may be {@code null} to indicate any signature)
+     * @return the method (never {@code null})
+     * @throws IllegalStateException if the method has not been found
+     * @see Class#getMethod
+     */
+    public static Method getMethod(Class&lt;?&gt; clazz, String methodName, Class&lt;?&gt;... paramTypes) {
+<span class="nc" id="L1070">        notNull(clazz, &quot;Class must not be null&quot;);</span>
+<span class="nc" id="L1071">        notNull(methodName, &quot;Method name must not be null&quot;);</span>
+<span class="nc bnc" id="L1072" title="All 2 branches missed.">        if (paramTypes != null) {</span>
+            try {
+<span class="nc" id="L1074">                return clazz.getMethod(methodName, paramTypes);</span>
+<span class="nc" id="L1075">            } catch (NoSuchMethodException ex) {</span>
+<span class="nc" id="L1076">                throw new IllegalStateException(&quot;Expected method not found: &quot; + ex);</span>
+            }
+        } else {
+<span class="nc" id="L1079">            Set&lt;Method&gt; candidates = findMethodCandidatesByName(clazz, methodName);</span>
+<span class="nc bnc" id="L1080" title="All 2 branches missed.">            if (candidates.size() == 1) {</span>
+<span class="nc" id="L1081">                return candidates.iterator().next();</span>
+<span class="nc bnc" id="L1082" title="All 2 branches missed.">            } else if (candidates.isEmpty()) {</span>
+<span class="nc" id="L1083">                throw new IllegalStateException(&quot;Expected method not found: &quot; + clazz.getName()</span>
+                                                + '.' + methodName);
+            } else {
+<span class="nc" id="L1086">                throw new IllegalStateException(&quot;No unique method found: &quot; + clazz.getName() + '.'</span>
+                                                + methodName);
+            }
+        }
+    }
+
+    /**
+     * Determine whether the given class has a public method with the given signature,
+     * and return it if available (else return {@code null}).
+     * &lt;p&gt;In case of any signature specified, only returns the method if there is a
+     * unique candidate, i.e. a single public method with the specified name.
+     * &lt;p&gt;Essentially translates {@code NoSuchMethodException} to {@code null}.
+     * @param clazz the clazz to analyze
+     * @param methodName the name of the method
+     * @param paramTypes the parameter types of the method
+     * (may be {@code null} to indicate any signature)
+     * @return the method, or {@code null} if not found
+     * @see Class#getMethod
+     */
+    public static Method getMethodIfAvailable(Class&lt;?&gt; clazz, String methodName,
+                                              Class&lt;?&gt;... paramTypes) {
+<span class="nc" id="L1107">        notNull(clazz, &quot;Class must not be null&quot;);</span>
+<span class="nc" id="L1108">        notNull(methodName, &quot;Method name must not be null&quot;);</span>
+<span class="nc bnc" id="L1109" title="All 2 branches missed.">        if (paramTypes != null) {</span>
+            try {
+<span class="nc" id="L1111">                return clazz.getMethod(methodName, paramTypes);</span>
+<span class="nc" id="L1112">            } catch (NoSuchMethodException ex) {</span>
+<span class="nc" id="L1113">                return null;</span>
+            }
+        } else {
+<span class="nc" id="L1116">            Set&lt;Method&gt; candidates = findMethodCandidatesByName(clazz, methodName);</span>
+<span class="nc bnc" id="L1117" title="All 2 branches missed.">            if (candidates.size() == 1) {</span>
+<span class="nc" id="L1118">                return candidates.iterator().next();</span>
+            }
+<span class="nc" id="L1120">            return null;</span>
+        }
+    }
+
+    /**
+     * Return the number of methods with a given name (with any argument types),
+     * for the given class and/or its superclasses. Includes non-public methods.
+     * @param clazz	the clazz to check
+     * @param methodName the name of the method
+     * @return the number of methods with the given name
+     */
+    public static int getMethodCountForName(Class&lt;?&gt; clazz, String methodName) {
+<span class="nc" id="L1132">        notNull(clazz, &quot;Class must not be null&quot;);</span>
+<span class="nc" id="L1133">        notNull(methodName, &quot;Method name must not be null&quot;);</span>
+<span class="nc" id="L1134">        int count = 0;</span>
+<span class="nc" id="L1135">        Method[] declaredMethods = clazz.getDeclaredMethods();</span>
+<span class="nc bnc" id="L1136" title="All 2 branches missed.">        for (Method method : declaredMethods) {</span>
+<span class="nc bnc" id="L1137" title="All 2 branches missed.">            if (methodName.equals(method.getName())) {</span>
+<span class="nc" id="L1138">                count++;</span>
+            }
+        }
+<span class="nc" id="L1141">        Class&lt;?&gt;[] ifcs = clazz.getInterfaces();</span>
+<span class="nc bnc" id="L1142" title="All 2 branches missed.">        for (Class&lt;?&gt; ifc : ifcs) {</span>
+<span class="nc" id="L1143">            count += getMethodCountForName(ifc, methodName);</span>
+        }
+<span class="nc bnc" id="L1145" title="All 2 branches missed.">        if (clazz.getSuperclass() != null) {</span>
+<span class="nc" id="L1146">            count += getMethodCountForName(clazz.getSuperclass(), methodName);</span>
+        }
+<span class="nc" id="L1148">        return count;</span>
+    }
+
+    /**
+     * Does the given class or one of its superclasses at least have one or more
+     * methods with the supplied name (with any argument types)?
+     * Includes non-public methods.
+     * @param clazz	the clazz to check
+     * @param methodName the name of the method
+     * @return whether there is at least one method with the given name
+     */
+    public static boolean hasAtLeastOneMethodWithName(Class&lt;?&gt; clazz, String methodName) {
+<span class="nc" id="L1160">        notNull(clazz, &quot;Class must not be null&quot;);</span>
+<span class="nc" id="L1161">        notNull(methodName, &quot;Method name must not be null&quot;);</span>
+<span class="nc" id="L1162">        Method[] declaredMethods = clazz.getDeclaredMethods();</span>
+<span class="nc bnc" id="L1163" title="All 2 branches missed.">        for (Method method : declaredMethods) {</span>
+<span class="nc bnc" id="L1164" title="All 2 branches missed.">            if (method.getName().equals(methodName)) {</span>
+<span class="nc" id="L1165">                return true;</span>
+            }
+        }
+<span class="nc" id="L1168">        Class&lt;?&gt;[] ifcs = clazz.getInterfaces();</span>
+<span class="nc bnc" id="L1169" title="All 2 branches missed.">        for (Class&lt;?&gt; ifc : ifcs) {</span>
+<span class="nc bnc" id="L1170" title="All 2 branches missed.">            if (hasAtLeastOneMethodWithName(ifc, methodName)) {</span>
+<span class="nc" id="L1171">                return true;</span>
+            }
+        }
+<span class="nc bnc" id="L1174" title="All 4 branches missed.">        return (clazz.getSuperclass() != null &amp;&amp; hasAtLeastOneMethodWithName(clazz.getSuperclass(),</span>
+            methodName));
+    }
+
+    /**
+     * Determine a corresponding interface method for the given method handle, if possible.
+     * &lt;p&gt;This is particularly useful for arriving at a public exported type on Jigsaw
+     * which can be reflectively invoked without an illegal access warning.
+     * @param method the method to be invoked, potentially from an implementation class
+     * @return the corresponding interface method, or the original method if none found
+     * @since 5.1
+     */
+    public static Method getInterfaceMethodIfPossible(Method method) {
+<span class="nc bnc" id="L1187" title="All 4 branches missed.">        if (Modifier.isPublic(method.getModifiers()) &amp;&amp; !method.getDeclaringClass().isInterface()) {</span>
+<span class="nc" id="L1188">            Class&lt;?&gt; current = method.getDeclaringClass();</span>
+<span class="nc bnc" id="L1189" title="All 4 branches missed.">            while (current != null &amp;&amp; current != Object.class) {</span>
+<span class="nc" id="L1190">                Class&lt;?&gt;[] ifcs = current.getInterfaces();</span>
+<span class="nc bnc" id="L1191" title="All 2 branches missed.">                for (Class&lt;?&gt; ifc : ifcs) {</span>
+                    try {
+<span class="nc" id="L1193">                        return ifc.getMethod(method.getName(), method.getParameterTypes());</span>
+<span class="nc" id="L1194">                    } catch (NoSuchMethodException ex) {</span>
+                        // ignore
+                    }
+                }
+<span class="nc" id="L1198">                current = current.getSuperclass();</span>
+<span class="nc" id="L1199">            }</span>
+        }
+<span class="nc" id="L1201">        return method;</span>
+    }
+
+    /**
+     * Determine whether the given method is declared by the user or at least pointing to
+     * a user-declared method.
+     * &lt;p&gt;Checks {@link Method#isSynthetic()} (for implementation methods) as well as the
+     * {@code GroovyObject} interface (for interface methods; on an implementation class,
+     * implementations of the {@code GroovyObject} methods will be marked as synthetic anyway).
+     * Note that, despite being synthetic, bridge methods ({@link Method#isBridge()}) are considered
+     * as user-level methods since they are eventually pointing to a user-declared generic method.
+     * @param method the method to check
+     * @return {@code true} if the method can be considered as user-declared; [@code false} otherwise
+     */
+    public static boolean isUserLevelMethod(Method method) {
+<span class="nc" id="L1216">        notNull(method, &quot;Method must not be null&quot;);</span>
+<span class="nc bnc" id="L1217" title="All 6 branches missed.">        return (method.isBridge() || (!method.isSynthetic() &amp;&amp; !isGroovyObjectMethod(method)));</span>
+    }
+
+    private static boolean isGroovyObjectMethod(Method method) {
+<span class="nc" id="L1221">        return method.getDeclaringClass().getName().equals(&quot;groovy.lang.GroovyObject&quot;);</span>
+    }
+
+    /**
+     * Determine whether the given method is overridable in the given target class.
+     * @param method the method to check
+     * @param targetClass the target class to check against
+     */
+    private static boolean isOverridable(Method method, Class&lt;?&gt; targetClass) {
+<span class="nc bnc" id="L1230" title="All 2 branches missed.">        if (Modifier.isPrivate(method.getModifiers())) {</span>
+<span class="nc" id="L1231">            return false;</span>
+        }
+<span class="nc bnc" id="L1233" title="All 4 branches missed.">        if (Modifier.isPublic(method.getModifiers()) || Modifier.isProtected(method.getModifiers())) {</span>
+<span class="nc" id="L1234">            return true;</span>
+        }
+<span class="nc bnc" id="L1236" title="All 4 branches missed.">        return (targetClass == null || getPackageName(method.getDeclaringClass()).equals(</span>
+<span class="nc" id="L1237">            getPackageName(targetClass)));</span>
+    }
+
+    /**
+     * Return a public static method of a class.
+     * @param clazz the class which defines the method
+     * @param methodName the static method name
+     * @param args the parameter types to the method
+     * @return the static method, or {@code null} if no static method was found
+     * @throws IllegalArgumentException if the method name is blank or the clazz is null
+     */
+    public static Method getStaticMethod(Class&lt;?&gt; clazz, String methodName, Class&lt;?&gt;... args) {
+<span class="nc" id="L1249">        notNull(clazz, &quot;Class must not be null&quot;);</span>
+<span class="nc" id="L1250">        notNull(methodName, &quot;Method name must not be null&quot;);</span>
+        try {
+<span class="nc" id="L1252">            Method method = clazz.getMethod(methodName, args);</span>
+<span class="nc bnc" id="L1253" title="All 2 branches missed.">            return Modifier.isStatic(method.getModifiers()) ? method : null;</span>
+<span class="nc" id="L1254">        } catch (NoSuchMethodException ex) {</span>
+<span class="nc" id="L1255">            return null;</span>
+        }
+    }
+
+    private static Set&lt;Method&gt; findMethodCandidatesByName(Class&lt;?&gt; clazz, String methodName) {
+<span class="nc" id="L1260">        Set&lt;Method&gt; candidates = new HashSet&lt;&gt;(1);</span>
+<span class="nc" id="L1261">        Method[] methods = clazz.getMethods();</span>
+<span class="nc bnc" id="L1262" title="All 2 branches missed.">        for (Method method : methods) {</span>
+<span class="nc bnc" id="L1263" title="All 2 branches missed.">            if (methodName.equals(method.getName())) {</span>
+<span class="nc" id="L1264">                candidates.add(method);</span>
+            }
+        }
+<span class="nc" id="L1267">        return candidates;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

@@ -1,0 +1,12 @@
+/Users/xbyan/Documents/coding/gturbine/gturbine-project/gturbine-tools/gturbine-maven-plugin/src/main/java/org/excellentcoder/gturbine/maven/AbstractDependencyFilterMojo.java
+/Users/xbyan/Documents/coding/gturbine/gturbine-project/gturbine-tools/gturbine-maven-plugin/src/main/java/org/excellentcoder/gturbine/maven/package-info.java
+/Users/xbyan/Documents/coding/gturbine/gturbine-project/gturbine-tools/gturbine-maven-plugin/target/generated-sources/plugin/HelpMojo.java
+/Users/xbyan/Documents/coding/gturbine/gturbine-project/gturbine-tools/gturbine-maven-plugin/src/main/java/org/excellentcoder/gturbine/maven/Exclude.java
+/Users/xbyan/Documents/coding/gturbine/gturbine-project/gturbine-tools/gturbine-maven-plugin/src/main/java/org/excellentcoder/gturbine/maven/IncludeFilter.java
+/Users/xbyan/Documents/coding/gturbine/gturbine-project/gturbine-tools/gturbine-maven-plugin/src/main/java/org/excellentcoder/gturbine/maven/MatchingGroupIdFilter.java
+/Users/xbyan/Documents/coding/gturbine/gturbine-project/gturbine-tools/gturbine-maven-plugin/src/main/java/org/excellentcoder/gturbine/maven/FilterableDependency.java
+/Users/xbyan/Documents/coding/gturbine/gturbine-project/gturbine-tools/gturbine-maven-plugin/src/main/java/org/excellentcoder/gturbine/maven/DependencyFilter.java
+/Users/xbyan/Documents/coding/gturbine/gturbine-project/gturbine-tools/gturbine-maven-plugin/src/main/java/org/excellentcoder/gturbine/maven/ArtifactsLibraries.java
+/Users/xbyan/Documents/coding/gturbine/gturbine-project/gturbine-tools/gturbine-maven-plugin/src/main/java/org/excellentcoder/gturbine/maven/RepackageMojo.java
+/Users/xbyan/Documents/coding/gturbine/gturbine-project/gturbine-tools/gturbine-maven-plugin/src/main/java/org/excellentcoder/gturbine/maven/Include.java
+/Users/xbyan/Documents/coding/gturbine/gturbine-project/gturbine-tools/gturbine-maven-plugin/src/main/java/org/excellentcoder/gturbine/maven/ExcludeFilter.java

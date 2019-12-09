@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ExplodedArchive.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">gturbine-bootstrap</a> &gt; <a href="../index.html" class="el_bundle">gturbine-loader</a> &gt; <a href="index.source.html" class="el_package">org.excellentcoder.gturbine.loader.archive</a> &gt; <span class="el_source">ExplodedArchive.java</span></div><h1>ExplodedArchive.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.excellentcoder.gturbine.loader.archive;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.jar.Manifest;
+
+/**
+ * {@link Archive} implementation backed by an exploded archive directory.
+ *
+ * @author Phillip Webb
+ * @author Andy Wilkinson
+ * @since 1.0.0
+ */
+public class ExplodedArchive implements Archive {
+
+<span class="nc" id="L46">    private static final Set&lt;String&gt; SKIPPED_NAMES = new HashSet&lt;&gt;(Arrays.asList(&quot;.&quot;, &quot;..&quot;));</span>
+
+    private final File               root;
+
+    private final boolean            recursive;
+
+    private File                     manifestFile;
+
+    private Manifest                 manifest;
+
+    /**
+     * Create a new {@link ExplodedArchive} instance.
+     * @param root the root folder
+     */
+    public ExplodedArchive(File root) {
+<span class="nc" id="L61">        this(root, true);</span>
+<span class="nc" id="L62">    }</span>
+
+    /**
+     * Create a new {@link ExplodedArchive} instance.
+     * @param root the root folder
+     * @param recursive if recursive searching should be used to locate the manifest.
+     * Defaults to {@code true}, folders with a large tree might want to set this to
+     * {@code
+     * false}.
+     */
+<span class="nc" id="L72">    public ExplodedArchive(File root, boolean recursive) {</span>
+<span class="nc bnc" id="L73" title="All 4 branches missed.">        if (!root.exists() || !root.isDirectory()) {</span>
+<span class="nc" id="L74">            throw new IllegalArgumentException(&quot;Invalid source folder &quot; + root);</span>
+        }
+<span class="nc" id="L76">        this.root = root;</span>
+<span class="nc" id="L77">        this.recursive = recursive;</span>
+<span class="nc" id="L78">        this.manifestFile = getManifestFile(root);</span>
+<span class="nc" id="L79">    }</span>
+
+    private File getManifestFile(File root) {
+<span class="nc" id="L82">        File metaInf = new File(root, &quot;META-INF&quot;);</span>
+<span class="nc" id="L83">        return new File(metaInf, &quot;MANIFEST.MF&quot;);</span>
+    }
+
+    @Override
+    public URL getUrl() throws MalformedURLException {
+<span class="nc" id="L88">        return this.root.toURI().toURL();</span>
+    }
+
+    @Override
+    public Manifest getManifest() throws IOException {
+<span class="nc bnc" id="L93" title="All 4 branches missed.">        if (this.manifest == null &amp;&amp; this.manifestFile.exists()) {</span>
+<span class="nc" id="L94">            try (FileInputStream inputStream = new FileInputStream(this.manifestFile)) {</span>
+<span class="nc" id="L95">                this.manifest = new Manifest(inputStream);</span>
+<span class="nc bnc" id="L96" title="All 8 branches missed.">            }</span>
+        }
+<span class="nc" id="L98">        return this.manifest;</span>
+    }
+
+    @Override
+    public List&lt;Archive&gt; getNestedArchives(EntryFilter filter) throws IOException {
+<span class="nc" id="L103">        List&lt;Archive&gt; nestedArchives = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L104" title="All 2 branches missed.">        for (Entry entry : this) {</span>
+<span class="nc bnc" id="L105" title="All 2 branches missed.">            if (filter.matches(entry)) {</span>
+<span class="nc" id="L106">                nestedArchives.add(getNestedArchive(entry));</span>
+            }
+<span class="nc" id="L108">        }</span>
+<span class="nc" id="L109">        return Collections.unmodifiableList(nestedArchives);</span>
+    }
+
+    @Override
+    public Iterator&lt;Entry&gt; iterator() {
+<span class="nc" id="L114">        return new FileEntryIterator(this.root, this.recursive);</span>
+    }
+
+    protected Archive getNestedArchive(Entry entry) throws IOException {
+<span class="nc" id="L118">        File file = ((FileEntry) entry).getFile();</span>
+<span class="nc bnc" id="L119" title="All 2 branches missed.">        return (file.isDirectory() ? new ExplodedArchive(file) : new JarFileArchive(file));</span>
+    }
+
+    @Override
+    public String toString() {
+        try {
+<span class="nc" id="L125">            return getUrl().toString();</span>
+<span class="nc" id="L126">        } catch (Exception ex) {</span>
+<span class="nc" id="L127">            return &quot;exploded archive&quot;;</span>
+        }
+    }
+
+    /**
+     * File based {@link Entry} {@link Iterator}.
+     */
+    private static class FileEntryIterator implements Iterator&lt;Entry&gt; {
+
+<span class="nc" id="L136">        private final Comparator&lt;File&gt;      entryComparator = new EntryComparator();</span>
+
+        private final File                  root;
+
+        private final boolean               recursive;
+
+<span class="nc" id="L142">        private final Deque&lt;Iterator&lt;File&gt;&gt; stack           = new LinkedList&lt;&gt;();</span>
+
+        private File                        current;
+
+<span class="nc" id="L146">        FileEntryIterator(File root, boolean recursive) {</span>
+<span class="nc" id="L147">            this.root = root;</span>
+<span class="nc" id="L148">            this.recursive = recursive;</span>
+<span class="nc" id="L149">            this.stack.add(listFiles(root));</span>
+<span class="nc" id="L150">            this.current = poll();</span>
+<span class="nc" id="L151">        }</span>
+
+        @Override
+        public boolean hasNext() {
+<span class="nc bnc" id="L155" title="All 2 branches missed.">            return this.current != null;</span>
+        }
+
+        @Override
+        public Entry next() {
+<span class="nc bnc" id="L160" title="All 2 branches missed.">            if (this.current == null) {</span>
+<span class="nc" id="L161">                throw new NoSuchElementException();</span>
+            }
+<span class="nc" id="L163">            File file = this.current;</span>
+<span class="nc bnc" id="L164" title="All 6 branches missed.">            if (file.isDirectory() &amp;&amp; (this.recursive || file.getParentFile().equals(this.root))) {</span>
+<span class="nc" id="L165">                this.stack.addFirst(listFiles(file));</span>
+            }
+<span class="nc" id="L167">            this.current = poll();</span>
+<span class="nc" id="L168">            String name = file.toURI().getPath().substring(this.root.toURI().getPath().length());</span>
+<span class="nc" id="L169">            return new FileEntry(name, file);</span>
+        }
+
+        private Iterator&lt;File&gt; listFiles(File file) {
+<span class="nc" id="L173">            File[] files = file.listFiles();</span>
+<span class="nc bnc" id="L174" title="All 2 branches missed.">            if (files == null) {</span>
+<span class="nc" id="L175">                return Collections.emptyIterator();</span>
+            }
+<span class="nc" id="L177">            Arrays.sort(files, this.entryComparator);</span>
+<span class="nc" id="L178">            return Arrays.asList(files).iterator();</span>
+        }
+
+        private File poll() {
+<span class="nc bnc" id="L182" title="All 2 branches missed.">            while (!this.stack.isEmpty()) {</span>
+<span class="nc bnc" id="L183" title="All 2 branches missed.">                while (this.stack.peek().hasNext()) {</span>
+<span class="nc" id="L184">                    File file = this.stack.peek().next();</span>
+<span class="nc bnc" id="L185" title="All 2 branches missed.">                    if (!SKIPPED_NAMES.contains(file.getName())) {</span>
+<span class="nc" id="L186">                        return file;</span>
+                    }
+<span class="nc" id="L188">                }</span>
+<span class="nc" id="L189">                this.stack.poll();</span>
+            }
+<span class="nc" id="L191">            return null;</span>
+        }
+
+        @Override
+        public void remove() {
+<span class="nc" id="L196">            throw new UnsupportedOperationException(&quot;remove&quot;);</span>
+        }
+
+        /**
+         * {@link Comparator} that orders {@link File} entries by their absolute paths.
+         */
+<span class="nc" id="L202">        private static class EntryComparator implements Comparator&lt;File&gt; {</span>
+
+            @Override
+            public int compare(File o1, File o2) {
+<span class="nc" id="L206">                return o1.getAbsolutePath().compareTo(o2.getAbsolutePath());</span>
+            }
+
+        }
+
+    }
+
+    /**
+     * {@link Entry} backed by a File.
+     */
+    private static class FileEntry implements Entry {
+
+        private final String name;
+
+        private final File   file;
+
+<span class="nc" id="L222">        FileEntry(String name, File file) {</span>
+<span class="nc" id="L223">            this.name = name;</span>
+<span class="nc" id="L224">            this.file = file;</span>
+<span class="nc" id="L225">        }</span>
+
+        File getFile() {
+<span class="nc" id="L228">            return this.file;</span>
+        }
+
+        @Override
+        public boolean isDirectory() {
+<span class="nc" id="L233">            return this.file.isDirectory();</span>
+        }
+
+        @Override
+        public String getName() {
+<span class="nc" id="L238">            return this.name;</span>
+        }
+
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

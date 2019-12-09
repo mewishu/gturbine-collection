@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="gturbine-bootstrap" />
+        <module name="gturbine-common" />
+        <module name="gturbine-container" />
+        <module name="gturbine-loader" />
+        <module name="gturbine-loader-tools" />
+        <module name="gturbine-maven-plugin" />
+        <module name="gturbine-plugin-maven-plugin" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel target="8" />
+  </component>
+</project>

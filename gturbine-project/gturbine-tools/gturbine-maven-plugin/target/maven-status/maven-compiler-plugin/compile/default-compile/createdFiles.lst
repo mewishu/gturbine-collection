@@ -1,0 +1,14 @@
+org/excellentcoder/gturbine/maven/RepackageMojo.class
+org/excellentcoder/gturbine/maven/RepackageMojo$LayoutType.class
+org/excellentcoder/gturbine/maven/Include.class
+org/excellentcoder/gturbine/maven/IncludeFilter.class
+org/excellentcoder/gturbine/maven/FilterableDependency.class
+org/excellentcoder/gturbine/maven/RepackageMojo$1.class
+org/excellentcoder/gturbine/maven/DependencyFilter.class
+org/excellentcoder/gturbine/maven/AbstractDependencyFilterMojo.class
+org/excellentcoder/gturbine/maven/ArtifactsLibraries.class
+org/excellentcoder/gturbine/maven/Exclude.class
+org/excellentcoder/gturbine/maven/RepackageMojo$LoggingMainClassTimeoutWarningListener.class
+org/excellentcoder/gturbine/maven/MatchingGroupIdFilter.class
+HelpMojo.class
+org/excellentcoder/gturbine/maven/ExcludeFilter.class

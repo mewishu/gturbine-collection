@@ -29,14 +29,14 @@ import java.util.jar.JarFile;
 import org.excellentcoder.gturbine.loader.jar.Handler;
 
 /**
- * URLClassLoader����ͨ��ԭʼ��jarЭ�飬����jar�д�class�ļ�
- * LaunchedURLClassLoader ͨ����չ��jarЭ�飬��ʵ��jar in jar��������µ�class�ļ�����
+ * URLClassLoader可以通过原始的jar协议，加载jar中从class文件
+ * LaunchedURLClassLoader 通过扩展的jar协议，以实现jar in jar这种情况下的class文件加载
  *
  * {@link ClassLoader} used by the {@link Launcher}.
  *
- * ����findResource:
- * ������ʱ����Class.getResource():URL����ȡ��Ӧ����Դ�ļ�����Class.getResource()��ͨ��ί�и�ClassLoader��getResource()ʵ�ֵġ�
- *
+ * 类加载器findResource:
+ * Class.getResource():URL来获取相应的资源文件，其内部就是通过委托给ClassLoader的getResource()实现的。
+ * 通常，创建自己的ClassLoader时只需要覆写findClass(name)和findResource()即可。
  *
  * @author Phillip Webb
  * @author Dave Syer

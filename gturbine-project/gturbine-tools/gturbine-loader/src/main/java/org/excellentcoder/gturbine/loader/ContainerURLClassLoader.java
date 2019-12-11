@@ -19,7 +19,7 @@ package org.excellentcoder.gturbine.loader;
 import java.net.URL;
 
 /**
- * ���������������
+ * GT容器类加载器
  *
  * @author xbyan
  * @version $Id: ContainerURLClassLoader.java, v 0.1 2019-12-05 10:20 AM xbyan Exp $$

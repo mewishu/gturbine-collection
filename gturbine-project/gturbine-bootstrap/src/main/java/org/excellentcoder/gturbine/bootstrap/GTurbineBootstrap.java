@@ -16,7 +16,7 @@
  */
 package org.excellentcoder.gturbine.bootstrap;
 
-import org.excellentcoder.gturbine.loader.ContainerLauncher;
+import org.excellentcoder.gturbine.loader.ClasspathLauncher;
 
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -41,7 +41,7 @@ public class GTurbineBootstrap {
                         + GTurbineBootstrap.class.getClassLoader());
         }
 
-        ContainerLauncher.launch(args, determineMainApplicationClass().getName(), urls);
+        ClasspathLauncher.launch(args, determineMainApplicationClass().getName(), urls);
     }
 
     /**

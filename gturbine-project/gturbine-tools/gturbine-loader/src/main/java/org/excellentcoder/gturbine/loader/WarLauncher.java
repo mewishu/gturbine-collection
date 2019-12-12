@@ -16,7 +16,7 @@
  */
 package org.excellentcoder.gturbine.loader;
 
-import org.excellentcoder.gturbine.loader.archive.Archive;
+import org.excellentcoder.gturbine.archive.Archive;
 
 /**
  * {@link Launcher} for WAR based archives. This launcher for standard WAR archives.

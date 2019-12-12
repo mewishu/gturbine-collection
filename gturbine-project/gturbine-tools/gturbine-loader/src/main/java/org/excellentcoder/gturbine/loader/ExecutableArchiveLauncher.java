@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.Manifest;
 
-import org.excellentcoder.gturbine.loader.archive.Archive;
+import org.excellentcoder.gturbine.archive.Archive;
 
 /**
  * Base class for executable archive {@link Launcher}s.

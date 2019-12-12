@@ -20,6 +20,7 @@
         <module>gturbine-container</module>
         <module>gturbine-tools</module>
         <module>gturbine-common</module>
+        <module>assemby</module>
     </modules>
 
 

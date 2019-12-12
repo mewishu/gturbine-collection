@@ -16,7 +16,7 @@
         <!--gturbine modules-->
         <dependency>
             <groupId>org.excellentcoder</groupId>
-            <artifactId>gturbine-loader</artifactId>
+            <artifactId>gturbine-archive</artifactId>
         </dependency>
 
 

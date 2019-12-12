@@ -14,42 +14,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.excellentcoder.gturbine.container;
+package org.excellentcoder.gturbine.loader;
 
-import org.excellentcoder.gturbine.archive.Archive;
-
-import java.util.List;
+import java.net.URL;
 
 /**
- * GT容器
- * 
+ * GT容器类加载器
+ *
  * @author xbyan
- * @version $Id: GTurbineContainer.java, v 0.1 2019-12-04 8:13 PM xbyan Exp $$
+ * @version $Id: ClasspathURLClassLoader.java, v 0.1 2019-12-05 10:20 AM xbyan Exp $$
  */
-public class GTurbineContainer {
-    /**
-     * 构造GT容器，需要提供容器的位置，以及bizClassLoader
-     *
-     * @param serverArchive
-     * @param pluginArchives 
-     * @param bizArchives 
-     * @param containerLoader
-     */
-    public GTurbineContainer(Archive serverArchive, List<Archive> pluginArchives,
-                             List<Archive> bizArchives, ClassLoader containerLoader) {
-
-    }
+public class ClasspathURLClassLoader extends LaunchedURLClassLoader {
 
     /**
-     * <pre>
-     * 构造Pandora容器，需要提供容器的位置，以及bizClassLoader
-     *
-     * </pre>
-     *
-     * @throws Exception
+     * Create a new {@link LaunchedURLClassLoader} instance.
+     * @param urls the URLs from which to load classes and resources
+     * @param parent the parent class loader for delegation
      */
-    public void start() throws Exception {
-        int iii = 0;
+    public ClasspathURLClassLoader(URL[] urls, ClassLoader parent) {
+        super(urls, parent);
     }
-
 }

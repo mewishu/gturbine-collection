@@ -26,7 +26,7 @@ import java.security.PrivilegedExceptionAction;
 import java.util.Enumeration;
 import java.util.jar.JarFile;
 
-import org.excellentcoder.gturbine.loader.jar.Handler;
+import org.excellentcoder.gturbine.archive.jar.Handler;
 
 /**
  * URLClassLoader可以通过原始的jar协议，加载jar中从class文件
@@ -176,8 +176,8 @@ public class LaunchedURLClassLoader extends URLClassLoader {
 
     private void clearCache(URLConnection connection) throws IOException {
         Object jarFile = ((JarURLConnection) connection).getJarFile();
-        if (jarFile instanceof org.excellentcoder.gturbine.loader.jar.JarFile) {
-            ((org.excellentcoder.gturbine.loader.jar.JarFile) jarFile).clearCache();
+        if (jarFile instanceof org.excellentcoder.gturbine.archive.jar.JarFile) {
+            ((org.excellentcoder.gturbine.archive.jar.JarFile) jarFile).clearCache();
         }
     }
 

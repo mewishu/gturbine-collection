@@ -53,10 +53,22 @@
 
             <!-- gturbine modules -->
             <dependency>
+                <groupId>org.excellentcoder</groupId>
+                <artifactId>gturbine-all</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>com.excellentcoder</groupId>
                 <artifactId>gturbine-tools</artifactId>
                 <version>${project.version}</version>
                 <type>pom</type>
+            </dependency>
+
+            <dependency>
+                <groupId>org.excellentcoder</groupId>
+                <artifactId>gturbine-archive</artifactId>
+                <version>${project.version}</version>
             </dependency>
 
             <dependency>

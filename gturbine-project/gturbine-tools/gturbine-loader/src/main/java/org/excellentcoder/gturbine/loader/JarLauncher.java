@@ -16,7 +16,7 @@
  */
 package org.excellentcoder.gturbine.loader;
 
-import org.excellentcoder.gturbine.loader.archive.Archive;
+import org.excellentcoder.gturbine.archive.Archive;
 
 /**
  * spring boot应用打包之后，生成一个fat jar，里面包含了应用依赖的jar包，还有Spring boot loader相关的类

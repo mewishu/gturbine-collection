@@ -20,6 +20,7 @@
         <module>gturbine-plugin-maven-plugin</module>
         <module>gturbine-maven-plugin</module>
         <module>gturbine-loader-tools</module>
+        <module>gturbine-archive</module>
 
     </modules>
 

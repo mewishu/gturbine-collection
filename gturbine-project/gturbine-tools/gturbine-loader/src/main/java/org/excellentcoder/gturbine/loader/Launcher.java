@@ -24,10 +24,10 @@ import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.excellentcoder.gturbine.loader.archive.Archive;
-import org.excellentcoder.gturbine.loader.archive.ExplodedArchive;
-import org.excellentcoder.gturbine.loader.archive.JarFileArchive;
-import org.excellentcoder.gturbine.loader.jar.JarFile;
+import org.excellentcoder.gturbine.archive.Archive;
+import org.excellentcoder.gturbine.archive.ExplodedArchive;
+import org.excellentcoder.gturbine.archive.JarFileArchive;
+import org.excellentcoder.gturbine.archive.jar.JarFile;
 
 /**
  * Base class for launchers that can start an application with a fully configured

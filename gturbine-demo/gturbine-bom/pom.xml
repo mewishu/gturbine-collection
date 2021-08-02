@@ -42,7 +42,7 @@
         <maven.plugin.plugin>3.4</maven.plugin.plugin>
         <surefire.version>2.20</surefire.version>
         <netty.version>4.1.42.Final</netty.version>
-        <apache.commons.compress>1.19</apache.commons.compress>
+        <apache.commons.compress>1.21</apache.commons.compress>
 
         <spring-framework.version>5.2.2.RELEASE</spring-framework.version>
 

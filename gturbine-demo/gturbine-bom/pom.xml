@@ -44,7 +44,7 @@
         <netty.version>4.1.42.Final</netty.version>
         <apache.commons.compress>1.19</apache.commons.compress>
 
-        <spring-framework.version>5.2.2.RELEASE</spring-framework.version>
+        <spring-framework.version>5.2.22.RELEASE</spring-framework.version>
 
     </properties>
 
